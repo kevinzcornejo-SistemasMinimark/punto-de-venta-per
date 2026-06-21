@@ -26,7 +26,6 @@ function POSPage() {
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState<string | null>(null);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
 
   // Atajos de teclado
@@ -106,7 +105,6 @@ function POSPage() {
       return;
     }
     try {
-      setSubmitting(true);
       const venta = await registrarVenta({
         items: cart.items,
         tipo_comprobante: data.tipo_comprobante as "BOLETA" | "FACTURA" | "TICKET",
@@ -125,8 +123,6 @@ function POSPage() {
       );
     } catch (e: any) {
       toast.error(e?.message ?? "Error al registrar la venta");
-    } finally {
-      setSubmitting(false);
     }
   };
 
