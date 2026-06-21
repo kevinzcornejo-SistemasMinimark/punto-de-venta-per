@@ -1,8 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Card } from "@/components/ui/card";
-import { mockProductos } from "@/data/mockData";
 import { formatPEN } from "@/lib/format";
 import { TrendingUp, ShoppingBag, AlertTriangle, Wallet } from "lucide-react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useCatalog } from "@/hooks/useCatalog";
 
 export const Route = createFileRoute("/_app/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — POS Minimarket" }] }),
@@ -10,10 +13,29 @@ export const Route = createFileRoute("/_app/dashboard")({
 });
 
 function Dashboard() {
-  const ventasHoy = 1284.5;
-  const transacciones = 37;
-  const ticketPromedio = ventasHoy / transacciones;
-  const stockCritico = mockProductos.filter((p) => p.stock <= p.stock_minimo);
+  const { isDemo, user } = useAuth();
+  const { productos } = useCatalog();
+  const [ventasHoy, setVentasHoy] = useState(1284.5);
+  const [transacciones, setTransacciones] = useState(37);
+
+  useEffect(() => {
+    if (isDemo || !user) return;
+    (async () => {
+      const desde = new Date();
+      desde.setHours(0, 0, 0, 0);
+      const { data } = await supabase
+        .from("ventas")
+        .select("total,estado,creada_en")
+        .gte("creada_en", desde.toISOString())
+        .neq("estado", "ANULADA");
+      const rows = data ?? [];
+      setVentasHoy(rows.reduce((s, v: any) => s + Number(v.total ?? 0), 0));
+      setTransacciones(rows.length);
+    })();
+  }, [isDemo, user?.id]);
+
+  const ticketPromedio = transacciones ? ventasHoy / transacciones : 0;
+  const stockCritico = productos.filter((p) => p.stock <= p.stock_minimo);
 
   const kpis = [
     { label: "Ventas de hoy", value: formatPEN(ventasHoy), icon: TrendingUp, color: "text-emerald-500" },
@@ -45,7 +67,7 @@ function Dashboard() {
         <Card className="p-5">
           <h2 className="font-bold mb-3">Top productos</h2>
           <div className="space-y-2">
-            {mockProductos.slice(0, 6).map((p, i) => (
+            {productos.slice(0, 6).map((p, i) => (
               <div key={p.id} className="flex items-center justify-between text-sm py-1.5 border-b last:border-0">
                 <span className="flex items-center gap-2">
                   <span className="text-xs font-bold text-muted-foreground w-5">#{i + 1}</span>

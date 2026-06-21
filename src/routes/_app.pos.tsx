@@ -3,13 +3,16 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Search, Barcode } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { mockCategorias, mockProductos, type MockProducto } from "@/data/mockData";
+import type { MockProducto } from "@/data/mockData";
 import { ProductGrid } from "@/components/pos/ProductGrid";
 import { Cart } from "@/components/pos/Cart";
 import { CheckoutModal } from "@/components/pos/CheckoutModal";
 import { usePOSCart } from "@/hooks/usePOSCart";
 import { toast } from "sonner";
 import { formatPEN } from "@/lib/format";
+import { useCatalog } from "@/hooks/useCatalog";
+import { useAuth } from "@/contexts/AuthContext";
+import { registrarVenta } from "@/lib/ventas";
 
 export const Route = createFileRoute("/_app/pos")({
   head: () => ({ meta: [{ title: "Punto de Venta — POS Minimarket" }] }),
@@ -18,6 +21,8 @@ export const Route = createFileRoute("/_app/pos")({
 
 function POSPage() {
   const cart = usePOSCart();
+  const { productos: allProductos, categorias, refresh } = useCatalog();
+  const { user, isDemo } = useAuth();
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState<string | null>(null);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
@@ -51,7 +56,7 @@ function POSPage() {
       if (now - last > 100) buf = "";
       last = now;
       if (e.key === "Enter" && buf.length >= 6) {
-        const p = mockProductos.find((x) => x.codigo_barras === buf);
+        const p = allProductos.find((x) => x.codigo_barras === buf);
         if (p) {
           cart.add(p);
           toast.success(`+ ${p.nombre}`);
@@ -65,10 +70,10 @@ function POSPage() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [cart]);
+  }, [cart, allProductos]);
 
   const productos = useMemo(() => {
-    let list = mockProductos;
+    let list = allProductos;
     if (cat) list = list.filter((p) => p.categoria_id === cat);
     if (query.trim()) {
       const q = query.toLowerCase();
@@ -79,22 +84,46 @@ function POSPage() {
       );
     }
     return list;
-  }, [query, cat]);
+  }, [query, cat, allProductos]);
 
   const handlePick = (p: MockProducto) => {
     cart.add(p);
   };
 
-  const confirmarVenta = (data: {
+  const confirmarVenta = async (data: {
     tipo_comprobante: string;
     serie: string;
     pagos: { metodo: string; monto: number }[];
   }) => {
-    setCheckoutOpen(false);
-    cart.clear();
-    toast.success(
-      `Venta registrada · ${data.tipo_comprobante} ${data.serie}`,
-    );
+    if (isDemo || !user) {
+      setCheckoutOpen(false);
+      const correlativo = Math.floor(Math.random() * 9000 + 1000);
+      cart.clear();
+      toast.success(
+        `Venta demo · ${data.tipo_comprobante} ${data.serie}-${correlativo}`,
+      );
+      return;
+    }
+    try {
+      const venta = await registrarVenta({
+        items: cart.items,
+        tipo_comprobante: data.tipo_comprobante as "BOLETA" | "FACTURA" | "TICKET",
+        serie: data.serie,
+        pagos: data.pagos,
+        subtotal: cart.totales.subtotal,
+        igv: cart.totales.igv,
+        total: cart.totales.total,
+        cajero_id: user.id,
+      });
+      setCheckoutOpen(false);
+      cart.clear();
+      refresh();
+      toast.success(
+        `Venta registrada · ${venta.serie}-${String(venta.correlativo).padStart(8, "0")}`,
+      );
+    } catch (e: any) {
+      toast.error(e?.message ?? "Error al registrar la venta");
+    }
   };
 
   return (
@@ -130,7 +159,7 @@ function POSPage() {
             >
               Todas
             </button>
-            {mockCategorias.map((c) => (
+            {categorias.map((c) => (
               <button
                 key={c.id}
                 onClick={() => setCat(c.id)}

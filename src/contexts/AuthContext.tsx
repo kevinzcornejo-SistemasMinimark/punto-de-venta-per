@@ -70,12 +70,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function fetchRole(userId: string) {
     try {
       const { data, error } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", userId)
+        .from("roles_usuario")
+        .select("rol")
+        .eq("usuario_id", userId)
         .limit(1)
         .maybeSingle();
-      if (!error && data?.role) setRole(data.role as AppRole);
+      if (!error && data?.rol) setRole(data.rol as AppRole);
       else setRole("cajero");
     } catch {
       setRole("cajero");
