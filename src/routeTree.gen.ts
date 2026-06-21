@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppUsuariosRouteImport } from './routes/_app.usuarios'
 import { Route as AppTicketsRouteImport } from './routes/_app.tickets'
 import { Route as AppReportesRouteImport } from './routes/_app.reportes'
+import { Route as AppProveedoresRouteImport } from './routes/_app.proveedores'
 import { Route as AppProductosRouteImport } from './routes/_app.productos'
 import { Route as AppPosRouteImport } from './routes/_app.pos'
 import { Route as AppLotesRouteImport } from './routes/_app.lotes'
@@ -59,6 +60,11 @@ const AppTicketsRoute = AppTicketsRouteImport.update({
 const AppReportesRoute = AppReportesRouteImport.update({
   id: '/reportes',
   path: '/reportes',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProveedoresRoute = AppProveedoresRouteImport.update({
+  id: '/proveedores',
+  path: '/proveedores',
   getParentRoute: () => AppRoute,
 } as any)
 const AppProductosRoute = AppProductosRouteImport.update({
@@ -161,6 +167,7 @@ export interface FileRoutesByFullPath {
   '/lotes': typeof AppLotesRoute
   '/pos': typeof AppPosRoute
   '/productos': typeof AppProductosRoute
+  '/proveedores': typeof AppProveedoresRoute
   '/reportes': typeof AppReportesRoute
   '/tickets': typeof AppTicketsRoute
   '/usuarios': typeof AppUsuariosRoute
@@ -184,6 +191,7 @@ export interface FileRoutesByTo {
   '/lotes': typeof AppLotesRoute
   '/pos': typeof AppPosRoute
   '/productos': typeof AppProductosRoute
+  '/proveedores': typeof AppProveedoresRoute
   '/reportes': typeof AppReportesRoute
   '/tickets': typeof AppTicketsRoute
   '/usuarios': typeof AppUsuariosRoute
@@ -209,6 +217,7 @@ export interface FileRoutesById {
   '/_app/lotes': typeof AppLotesRoute
   '/_app/pos': typeof AppPosRoute
   '/_app/productos': typeof AppProductosRoute
+  '/_app/proveedores': typeof AppProveedoresRoute
   '/_app/reportes': typeof AppReportesRoute
   '/_app/tickets': typeof AppTicketsRoute
   '/_app/usuarios': typeof AppUsuariosRoute
@@ -234,6 +243,7 @@ export interface FileRouteTypes {
     | '/lotes'
     | '/pos'
     | '/productos'
+    | '/proveedores'
     | '/reportes'
     | '/tickets'
     | '/usuarios'
@@ -257,6 +267,7 @@ export interface FileRouteTypes {
     | '/lotes'
     | '/pos'
     | '/productos'
+    | '/proveedores'
     | '/reportes'
     | '/tickets'
     | '/usuarios'
@@ -281,6 +292,7 @@ export interface FileRouteTypes {
     | '/_app/lotes'
     | '/_app/pos'
     | '/_app/productos'
+    | '/_app/proveedores'
     | '/_app/reportes'
     | '/_app/tickets'
     | '/_app/usuarios'
@@ -334,6 +346,13 @@ declare module '@tanstack/react-router' {
       path: '/reportes'
       fullPath: '/reportes'
       preLoaderRoute: typeof AppReportesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/proveedores': {
+      id: '/_app/proveedores'
+      path: '/proveedores'
+      fullPath: '/proveedores'
+      preLoaderRoute: typeof AppProveedoresRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/productos': {
@@ -468,6 +487,7 @@ interface AppRouteChildren {
   AppLotesRoute: typeof AppLotesRoute
   AppPosRoute: typeof AppPosRoute
   AppProductosRoute: typeof AppProductosRoute
+  AppProveedoresRoute: typeof AppProveedoresRoute
   AppReportesRoute: typeof AppReportesRoute
   AppTicketsRoute: typeof AppTicketsRoute
   AppUsuariosRoute: typeof AppUsuariosRoute
@@ -490,6 +510,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppLotesRoute: AppLotesRoute,
   AppPosRoute: AppPosRoute,
   AppProductosRoute: AppProductosRoute,
+  AppProveedoresRoute: AppProveedoresRoute,
   AppReportesRoute: AppReportesRoute,
   AppTicketsRoute: AppTicketsRoute,
   AppUsuariosRoute: AppUsuariosRoute,
