@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppUsuariosRouteImport } from './routes/_app.usuarios'
 import { Route as AppTicketsRouteImport } from './routes/_app.tickets'
 import { Route as AppReportesRouteImport } from './routes/_app.reportes'
+import { Route as AppProductosRouteImport } from './routes/_app.productos'
 import { Route as AppPosRouteImport } from './routes/_app.pos'
 import { Route as AppLotesRouteImport } from './routes/_app.lotes'
 import { Route as AppKardexRouteImport } from './routes/_app.kardex'
@@ -57,6 +58,11 @@ const AppTicketsRoute = AppTicketsRouteImport.update({
 const AppReportesRoute = AppReportesRouteImport.update({
   id: '/reportes',
   path: '/reportes',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProductosRoute = AppProductosRouteImport.update({
+  id: '/productos',
+  path: '/productos',
   getParentRoute: () => AppRoute,
 } as any)
 const AppPosRoute = AppPosRouteImport.update({
@@ -147,6 +153,7 @@ export interface FileRoutesByFullPath {
   '/kardex': typeof AppKardexRoute
   '/lotes': typeof AppLotesRoute
   '/pos': typeof AppPosRoute
+  '/productos': typeof AppProductosRoute
   '/reportes': typeof AppReportesRoute
   '/tickets': typeof AppTicketsRoute
   '/usuarios': typeof AppUsuariosRoute
@@ -168,6 +175,7 @@ export interface FileRoutesByTo {
   '/kardex': typeof AppKardexRoute
   '/lotes': typeof AppLotesRoute
   '/pos': typeof AppPosRoute
+  '/productos': typeof AppProductosRoute
   '/reportes': typeof AppReportesRoute
   '/tickets': typeof AppTicketsRoute
   '/usuarios': typeof AppUsuariosRoute
@@ -191,6 +199,7 @@ export interface FileRoutesById {
   '/_app/kardex': typeof AppKardexRoute
   '/_app/lotes': typeof AppLotesRoute
   '/_app/pos': typeof AppPosRoute
+  '/_app/productos': typeof AppProductosRoute
   '/_app/reportes': typeof AppReportesRoute
   '/_app/tickets': typeof AppTicketsRoute
   '/_app/usuarios': typeof AppUsuariosRoute
@@ -214,6 +223,7 @@ export interface FileRouteTypes {
     | '/kardex'
     | '/lotes'
     | '/pos'
+    | '/productos'
     | '/reportes'
     | '/tickets'
     | '/usuarios'
@@ -235,6 +245,7 @@ export interface FileRouteTypes {
     | '/kardex'
     | '/lotes'
     | '/pos'
+    | '/productos'
     | '/reportes'
     | '/tickets'
     | '/usuarios'
@@ -257,6 +268,7 @@ export interface FileRouteTypes {
     | '/_app/kardex'
     | '/_app/lotes'
     | '/_app/pos'
+    | '/_app/productos'
     | '/_app/reportes'
     | '/_app/tickets'
     | '/_app/usuarios'
@@ -310,6 +322,13 @@ declare module '@tanstack/react-router' {
       path: '/reportes'
       fullPath: '/reportes'
       preLoaderRoute: typeof AppReportesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/productos': {
+      id: '/_app/productos'
+      path: '/productos'
+      fullPath: '/productos'
+      preLoaderRoute: typeof AppProductosRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/pos': {
@@ -428,6 +447,7 @@ interface AppRouteChildren {
   AppKardexRoute: typeof AppKardexRoute
   AppLotesRoute: typeof AppLotesRoute
   AppPosRoute: typeof AppPosRoute
+  AppProductosRoute: typeof AppProductosRoute
   AppReportesRoute: typeof AppReportesRoute
   AppTicketsRoute: typeof AppTicketsRoute
   AppUsuariosRoute: typeof AppUsuariosRoute
@@ -448,6 +468,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppKardexRoute: AppKardexRoute,
   AppLotesRoute: AppLotesRoute,
   AppPosRoute: AppPosRoute,
+  AppProductosRoute: AppProductosRoute,
   AppReportesRoute: AppReportesRoute,
   AppTicketsRoute: AppTicketsRoute,
   AppUsuariosRoute: AppUsuariosRoute,
