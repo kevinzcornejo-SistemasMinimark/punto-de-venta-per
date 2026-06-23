@@ -18,6 +18,7 @@ import { Route as AppPosRouteImport } from './routes/_app.pos'
 import { Route as AppLotesRouteImport } from './routes/_app.lotes'
 import { Route as AppKardexRouteImport } from './routes/_app.kardex'
 import { Route as AppInventarioRouteImport } from './routes/_app.inventario'
+import { Route as AppGastosRouteImport } from './routes/_app.gastos'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppClientesRouteImport } from './routes/_app.clientes'
 import { Route as AppCategoriasRouteImport } from './routes/_app.categorias'
@@ -67,6 +68,11 @@ const AppInventarioRoute = AppInventarioRouteImport.update({
   path: '/inventario',
   getParentRoute: () => AppRoute,
 } as any)
+const AppGastosRoute = AppGastosRouteImport.update({
+  id: '/gastos',
+  path: '/gastos',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -95,6 +101,7 @@ export interface FileRoutesByFullPath {
   '/categorias': typeof AppCategoriasRoute
   '/clientes': typeof AppClientesRoute
   '/dashboard': typeof AppDashboardRoute
+  '/gastos': typeof AppGastosRoute
   '/inventario': typeof AppInventarioRoute
   '/kardex': typeof AppKardexRoute
   '/lotes': typeof AppLotesRoute
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/categorias': typeof AppCategoriasRoute
   '/clientes': typeof AppClientesRoute
   '/dashboard': typeof AppDashboardRoute
+  '/gastos': typeof AppGastosRoute
   '/inventario': typeof AppInventarioRoute
   '/kardex': typeof AppKardexRoute
   '/lotes': typeof AppLotesRoute
@@ -125,6 +133,7 @@ export interface FileRoutesById {
   '/_app/categorias': typeof AppCategoriasRoute
   '/_app/clientes': typeof AppClientesRoute
   '/_app/dashboard': typeof AppDashboardRoute
+  '/_app/gastos': typeof AppGastosRoute
   '/_app/inventario': typeof AppInventarioRoute
   '/_app/kardex': typeof AppKardexRoute
   '/_app/lotes': typeof AppLotesRoute
@@ -141,6 +150,7 @@ export interface FileRouteTypes {
     | '/categorias'
     | '/clientes'
     | '/dashboard'
+    | '/gastos'
     | '/inventario'
     | '/kardex'
     | '/lotes'
@@ -155,6 +165,7 @@ export interface FileRouteTypes {
     | '/categorias'
     | '/clientes'
     | '/dashboard'
+    | '/gastos'
     | '/inventario'
     | '/kardex'
     | '/lotes'
@@ -170,6 +181,7 @@ export interface FileRouteTypes {
     | '/_app/categorias'
     | '/_app/clientes'
     | '/_app/dashboard'
+    | '/_app/gastos'
     | '/_app/inventario'
     | '/_app/kardex'
     | '/_app/lotes'
@@ -249,6 +261,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppInventarioRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/gastos': {
+      id: '/_app/gastos'
+      path: '/gastos'
+      fullPath: '/gastos'
+      preLoaderRoute: typeof AppGastosRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/dashboard': {
       id: '/_app/dashboard'
       path: '/dashboard'
@@ -285,6 +304,7 @@ interface AppRouteChildren {
   AppCategoriasRoute: typeof AppCategoriasRoute
   AppClientesRoute: typeof AppClientesRoute
   AppDashboardRoute: typeof AppDashboardRoute
+  AppGastosRoute: typeof AppGastosRoute
   AppInventarioRoute: typeof AppInventarioRoute
   AppKardexRoute: typeof AppKardexRoute
   AppLotesRoute: typeof AppLotesRoute
@@ -298,6 +318,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppCategoriasRoute: AppCategoriasRoute,
   AppClientesRoute: AppClientesRoute,
   AppDashboardRoute: AppDashboardRoute,
+  AppGastosRoute: AppGastosRoute,
   AppInventarioRoute: AppInventarioRoute,
   AppKardexRoute: AppKardexRoute,
   AppLotesRoute: AppLotesRoute,
