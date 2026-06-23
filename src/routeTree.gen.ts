@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppUsuariosRouteImport } from './routes/_app.usuarios'
 import { Route as AppTicketsRouteImport } from './routes/_app.tickets'
 import { Route as AppReportesRouteImport } from './routes/_app.reportes'
 import { Route as AppProveedoresRouteImport } from './routes/_app.proveedores'
@@ -39,6 +40,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppUsuariosRoute = AppUsuariosRouteImport.update({
+  id: '/usuarios',
+  path: '/usuarios',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppTicketsRoute = AppTicketsRouteImport.update({
   id: '/tickets',
@@ -122,6 +128,7 @@ export interface FileRoutesByFullPath {
   '/proveedores': typeof AppProveedoresRoute
   '/reportes': typeof AppReportesRoute
   '/tickets': typeof AppTicketsRoute
+  '/usuarios': typeof AppUsuariosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -139,6 +146,7 @@ export interface FileRoutesByTo {
   '/proveedores': typeof AppProveedoresRoute
   '/reportes': typeof AppReportesRoute
   '/tickets': typeof AppTicketsRoute
+  '/usuarios': typeof AppUsuariosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -158,6 +166,7 @@ export interface FileRoutesById {
   '/_app/proveedores': typeof AppProveedoresRoute
   '/_app/reportes': typeof AppReportesRoute
   '/_app/tickets': typeof AppTicketsRoute
+  '/_app/usuarios': typeof AppUsuariosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -177,6 +186,7 @@ export interface FileRouteTypes {
     | '/proveedores'
     | '/reportes'
     | '/tickets'
+    | '/usuarios'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -194,6 +204,7 @@ export interface FileRouteTypes {
     | '/proveedores'
     | '/reportes'
     | '/tickets'
+    | '/usuarios'
   id:
     | '__root__'
     | '/'
@@ -212,6 +223,7 @@ export interface FileRouteTypes {
     | '/_app/proveedores'
     | '/_app/reportes'
     | '/_app/tickets'
+    | '/_app/usuarios'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -242,6 +254,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/usuarios': {
+      id: '/_app/usuarios'
+      path: '/usuarios'
+      fullPath: '/usuarios'
+      preLoaderRoute: typeof AppUsuariosRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/tickets': {
       id: '/_app/tickets'
@@ -351,6 +370,7 @@ interface AppRouteChildren {
   AppProveedoresRoute: typeof AppProveedoresRoute
   AppReportesRoute: typeof AppReportesRoute
   AppTicketsRoute: typeof AppTicketsRoute
+  AppUsuariosRoute: typeof AppUsuariosRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -367,6 +387,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppProveedoresRoute: AppProveedoresRoute,
   AppReportesRoute: AppReportesRoute,
   AppTicketsRoute: AppTicketsRoute,
+  AppUsuariosRoute: AppUsuariosRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
