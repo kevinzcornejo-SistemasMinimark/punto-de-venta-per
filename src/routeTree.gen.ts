@@ -21,6 +21,7 @@ import { Route as AppPosRouteImport } from './routes/_app.pos'
 import { Route as AppLotesRouteImport } from './routes/_app.lotes'
 import { Route as AppKardexRouteImport } from './routes/_app.kardex'
 import { Route as AppInventarioRouteImport } from './routes/_app.inventario'
+import { Route as AppGuiaRouteImport } from './routes/_app.guia'
 import { Route as AppGastosRouteImport } from './routes/_app.gastos'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppClientesRouteImport } from './routes/_app.clientes'
@@ -86,6 +87,11 @@ const AppInventarioRoute = AppInventarioRouteImport.update({
   path: '/inventario',
   getParentRoute: () => AppRoute,
 } as any)
+const AppGuiaRoute = AppGuiaRouteImport.update({
+  id: '/guia',
+  path: '/guia',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppGastosRoute = AppGastosRouteImport.update({
   id: '/gastos',
   path: '/gastos',
@@ -120,6 +126,7 @@ export interface FileRoutesByFullPath {
   '/clientes': typeof AppClientesRoute
   '/dashboard': typeof AppDashboardRoute
   '/gastos': typeof AppGastosRoute
+  '/guia': typeof AppGuiaRoute
   '/inventario': typeof AppInventarioRoute
   '/kardex': typeof AppKardexRoute
   '/lotes': typeof AppLotesRoute
@@ -138,6 +145,7 @@ export interface FileRoutesByTo {
   '/clientes': typeof AppClientesRoute
   '/dashboard': typeof AppDashboardRoute
   '/gastos': typeof AppGastosRoute
+  '/guia': typeof AppGuiaRoute
   '/inventario': typeof AppInventarioRoute
   '/kardex': typeof AppKardexRoute
   '/lotes': typeof AppLotesRoute
@@ -158,6 +166,7 @@ export interface FileRoutesById {
   '/_app/clientes': typeof AppClientesRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/gastos': typeof AppGastosRoute
+  '/_app/guia': typeof AppGuiaRoute
   '/_app/inventario': typeof AppInventarioRoute
   '/_app/kardex': typeof AppKardexRoute
   '/_app/lotes': typeof AppLotesRoute
@@ -178,6 +187,7 @@ export interface FileRouteTypes {
     | '/clientes'
     | '/dashboard'
     | '/gastos'
+    | '/guia'
     | '/inventario'
     | '/kardex'
     | '/lotes'
@@ -196,6 +206,7 @@ export interface FileRouteTypes {
     | '/clientes'
     | '/dashboard'
     | '/gastos'
+    | '/guia'
     | '/inventario'
     | '/kardex'
     | '/lotes'
@@ -215,6 +226,7 @@ export interface FileRouteTypes {
     | '/_app/clientes'
     | '/_app/dashboard'
     | '/_app/gastos'
+    | '/_app/guia'
     | '/_app/inventario'
     | '/_app/kardex'
     | '/_app/lotes'
@@ -318,6 +330,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppInventarioRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/guia': {
+      id: '/_app/guia'
+      path: '/guia'
+      fullPath: '/guia'
+      preLoaderRoute: typeof AppGuiaRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/gastos': {
       id: '/_app/gastos'
       path: '/gastos'
@@ -362,6 +381,7 @@ interface AppRouteChildren {
   AppClientesRoute: typeof AppClientesRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppGastosRoute: typeof AppGastosRoute
+  AppGuiaRoute: typeof AppGuiaRoute
   AppInventarioRoute: typeof AppInventarioRoute
   AppKardexRoute: typeof AppKardexRoute
   AppLotesRoute: typeof AppLotesRoute
@@ -379,6 +399,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppClientesRoute: AppClientesRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppGastosRoute: AppGastosRoute,
+  AppGuiaRoute: AppGuiaRoute,
   AppInventarioRoute: AppInventarioRoute,
   AppKardexRoute: AppKardexRoute,
   AppLotesRoute: AppLotesRoute,
