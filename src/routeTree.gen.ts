@@ -27,6 +27,7 @@ import { Route as AppEtiquetasRouteImport } from './routes/_app.etiquetas'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppConfiguracionRouteImport } from './routes/_app.configuracion'
 import { Route as AppComprasRouteImport } from './routes/_app.compras'
+import { Route as AppCombosRouteImport } from './routes/_app.combos'
 import { Route as AppClientesRouteImport } from './routes/_app.clientes'
 import { Route as AppCategoriasRouteImport } from './routes/_app.categorias'
 import { Route as AppCajaRouteImport } from './routes/_app.caja'
@@ -121,6 +122,11 @@ const AppComprasRoute = AppComprasRouteImport.update({
   path: '/compras',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCombosRoute = AppCombosRouteImport.update({
+  id: '/combos',
+  path: '/combos',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppClientesRoute = AppClientesRouteImport.update({
   id: '/clientes',
   path: '/clientes',
@@ -149,6 +155,7 @@ export interface FileRoutesByFullPath {
   '/caja': typeof AppCajaRoute
   '/categorias': typeof AppCategoriasRoute
   '/clientes': typeof AppClientesRoute
+  '/combos': typeof AppCombosRoute
   '/compras': typeof AppComprasRoute
   '/configuracion': typeof AppConfiguracionRoute
   '/dashboard': typeof AppDashboardRoute
@@ -172,6 +179,7 @@ export interface FileRoutesByTo {
   '/caja': typeof AppCajaRoute
   '/categorias': typeof AppCategoriasRoute
   '/clientes': typeof AppClientesRoute
+  '/combos': typeof AppCombosRoute
   '/compras': typeof AppComprasRoute
   '/configuracion': typeof AppConfiguracionRoute
   '/dashboard': typeof AppDashboardRoute
@@ -197,6 +205,7 @@ export interface FileRoutesById {
   '/_app/caja': typeof AppCajaRoute
   '/_app/categorias': typeof AppCategoriasRoute
   '/_app/clientes': typeof AppClientesRoute
+  '/_app/combos': typeof AppCombosRoute
   '/_app/compras': typeof AppComprasRoute
   '/_app/configuracion': typeof AppConfiguracionRoute
   '/_app/dashboard': typeof AppDashboardRoute
@@ -222,6 +231,7 @@ export interface FileRouteTypes {
     | '/caja'
     | '/categorias'
     | '/clientes'
+    | '/combos'
     | '/compras'
     | '/configuracion'
     | '/dashboard'
@@ -245,6 +255,7 @@ export interface FileRouteTypes {
     | '/caja'
     | '/categorias'
     | '/clientes'
+    | '/combos'
     | '/compras'
     | '/configuracion'
     | '/dashboard'
@@ -269,6 +280,7 @@ export interface FileRouteTypes {
     | '/_app/caja'
     | '/_app/categorias'
     | '/_app/clientes'
+    | '/_app/combos'
     | '/_app/compras'
     | '/_app/configuracion'
     | '/_app/dashboard'
@@ -420,6 +432,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppComprasRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/combos': {
+      id: '/_app/combos'
+      path: '/combos'
+      fullPath: '/combos'
+      preLoaderRoute: typeof AppCombosRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/clientes': {
       id: '/_app/clientes'
       path: '/clientes'
@@ -456,6 +475,7 @@ interface AppRouteChildren {
   AppCajaRoute: typeof AppCajaRoute
   AppCategoriasRoute: typeof AppCategoriasRoute
   AppClientesRoute: typeof AppClientesRoute
+  AppCombosRoute: typeof AppCombosRoute
   AppComprasRoute: typeof AppComprasRoute
   AppConfiguracionRoute: typeof AppConfiguracionRoute
   AppDashboardRoute: typeof AppDashboardRoute
@@ -478,6 +498,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppCajaRoute: AppCajaRoute,
   AppCategoriasRoute: AppCategoriasRoute,
   AppClientesRoute: AppClientesRoute,
+  AppCombosRoute: AppCombosRoute,
   AppComprasRoute: AppComprasRoute,
   AppConfiguracionRoute: AppConfiguracionRoute,
   AppDashboardRoute: AppDashboardRoute,
