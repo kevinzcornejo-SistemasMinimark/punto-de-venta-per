@@ -21,6 +21,7 @@ import { Route as AppInventarioRouteImport } from './routes/_app.inventario'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppClientesRouteImport } from './routes/_app.clientes'
 import { Route as AppCategoriasRouteImport } from './routes/_app.categorias'
+import { Route as AppCajaRouteImport } from './routes/_app.caja'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -81,10 +82,16 @@ const AppCategoriasRoute = AppCategoriasRouteImport.update({
   path: '/categorias',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCajaRoute = AppCajaRouteImport.update({
+  id: '/caja',
+  path: '/caja',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/caja': typeof AppCajaRoute
   '/categorias': typeof AppCategoriasRoute
   '/clientes': typeof AppClientesRoute
   '/dashboard': typeof AppDashboardRoute
@@ -98,6 +105,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/caja': typeof AppCajaRoute
   '/categorias': typeof AppCategoriasRoute
   '/clientes': typeof AppClientesRoute
   '/dashboard': typeof AppDashboardRoute
@@ -113,6 +121,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
+  '/_app/caja': typeof AppCajaRoute
   '/_app/categorias': typeof AppCategoriasRoute
   '/_app/clientes': typeof AppClientesRoute
   '/_app/dashboard': typeof AppDashboardRoute
@@ -128,6 +137,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/caja'
     | '/categorias'
     | '/clientes'
     | '/dashboard'
@@ -141,6 +151,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/caja'
     | '/categorias'
     | '/clientes'
     | '/dashboard'
@@ -155,6 +166,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_app'
     | '/login'
+    | '/_app/caja'
     | '/_app/categorias'
     | '/_app/clientes'
     | '/_app/dashboard'
@@ -258,10 +270,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCategoriasRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/caja': {
+      id: '/_app/caja'
+      path: '/caja'
+      fullPath: '/caja'
+      preLoaderRoute: typeof AppCajaRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
+  AppCajaRoute: typeof AppCajaRoute
   AppCategoriasRoute: typeof AppCategoriasRoute
   AppClientesRoute: typeof AppClientesRoute
   AppDashboardRoute: typeof AppDashboardRoute
@@ -274,6 +294,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppCajaRoute: AppCajaRoute,
   AppCategoriasRoute: AppCategoriasRoute,
   AppClientesRoute: AppClientesRoute,
   AppDashboardRoute: AppDashboardRoute,
