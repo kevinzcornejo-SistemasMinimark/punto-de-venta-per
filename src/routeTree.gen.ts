@@ -13,6 +13,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppTicketsRouteImport } from './routes/_app.tickets'
+import { Route as AppReportesRouteImport } from './routes/_app.reportes'
 import { Route as AppProveedoresRouteImport } from './routes/_app.proveedores'
 import { Route as AppProductosRouteImport } from './routes/_app.productos'
 import { Route as AppPosRouteImport } from './routes/_app.pos'
@@ -42,6 +43,11 @@ const IndexRoute = IndexRouteImport.update({
 const AppTicketsRoute = AppTicketsRouteImport.update({
   id: '/tickets',
   path: '/tickets',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppReportesRoute = AppReportesRouteImport.update({
+  id: '/reportes',
+  path: '/reportes',
   getParentRoute: () => AppRoute,
 } as any)
 const AppProveedoresRoute = AppProveedoresRouteImport.update({
@@ -114,6 +120,7 @@ export interface FileRoutesByFullPath {
   '/pos': typeof AppPosRoute
   '/productos': typeof AppProductosRoute
   '/proveedores': typeof AppProveedoresRoute
+  '/reportes': typeof AppReportesRoute
   '/tickets': typeof AppTicketsRoute
 }
 export interface FileRoutesByTo {
@@ -130,6 +137,7 @@ export interface FileRoutesByTo {
   '/pos': typeof AppPosRoute
   '/productos': typeof AppProductosRoute
   '/proveedores': typeof AppProveedoresRoute
+  '/reportes': typeof AppReportesRoute
   '/tickets': typeof AppTicketsRoute
 }
 export interface FileRoutesById {
@@ -148,6 +156,7 @@ export interface FileRoutesById {
   '/_app/pos': typeof AppPosRoute
   '/_app/productos': typeof AppProductosRoute
   '/_app/proveedores': typeof AppProveedoresRoute
+  '/_app/reportes': typeof AppReportesRoute
   '/_app/tickets': typeof AppTicketsRoute
 }
 export interface FileRouteTypes {
@@ -166,6 +175,7 @@ export interface FileRouteTypes {
     | '/pos'
     | '/productos'
     | '/proveedores'
+    | '/reportes'
     | '/tickets'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -182,6 +192,7 @@ export interface FileRouteTypes {
     | '/pos'
     | '/productos'
     | '/proveedores'
+    | '/reportes'
     | '/tickets'
   id:
     | '__root__'
@@ -199,6 +210,7 @@ export interface FileRouteTypes {
     | '/_app/pos'
     | '/_app/productos'
     | '/_app/proveedores'
+    | '/_app/reportes'
     | '/_app/tickets'
   fileRoutesById: FileRoutesById
 }
@@ -236,6 +248,13 @@ declare module '@tanstack/react-router' {
       path: '/tickets'
       fullPath: '/tickets'
       preLoaderRoute: typeof AppTicketsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/reportes': {
+      id: '/_app/reportes'
+      path: '/reportes'
+      fullPath: '/reportes'
+      preLoaderRoute: typeof AppReportesRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/proveedores': {
@@ -330,6 +349,7 @@ interface AppRouteChildren {
   AppPosRoute: typeof AppPosRoute
   AppProductosRoute: typeof AppProductosRoute
   AppProveedoresRoute: typeof AppProveedoresRoute
+  AppReportesRoute: typeof AppReportesRoute
   AppTicketsRoute: typeof AppTicketsRoute
 }
 
@@ -345,6 +365,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppPosRoute: AppPosRoute,
   AppProductosRoute: AppProductosRoute,
   AppProveedoresRoute: AppProveedoresRoute,
+  AppReportesRoute: AppReportesRoute,
   AppTicketsRoute: AppTicketsRoute,
 }
 
