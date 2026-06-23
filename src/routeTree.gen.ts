@@ -23,6 +23,7 @@ import { Route as AppKardexRouteImport } from './routes/_app.kardex'
 import { Route as AppInventarioRouteImport } from './routes/_app.inventario'
 import { Route as AppGuiaRouteImport } from './routes/_app.guia'
 import { Route as AppGastosRouteImport } from './routes/_app.gastos'
+import { Route as AppEtiquetasRouteImport } from './routes/_app.etiquetas'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppClientesRouteImport } from './routes/_app.clientes'
 import { Route as AppCategoriasRouteImport } from './routes/_app.categorias'
@@ -97,6 +98,11 @@ const AppGastosRoute = AppGastosRouteImport.update({
   path: '/gastos',
   getParentRoute: () => AppRoute,
 } as any)
+const AppEtiquetasRoute = AppEtiquetasRouteImport.update({
+  id: '/etiquetas',
+  path: '/etiquetas',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -125,6 +131,7 @@ export interface FileRoutesByFullPath {
   '/categorias': typeof AppCategoriasRoute
   '/clientes': typeof AppClientesRoute
   '/dashboard': typeof AppDashboardRoute
+  '/etiquetas': typeof AppEtiquetasRoute
   '/gastos': typeof AppGastosRoute
   '/guia': typeof AppGuiaRoute
   '/inventario': typeof AppInventarioRoute
@@ -144,6 +151,7 @@ export interface FileRoutesByTo {
   '/categorias': typeof AppCategoriasRoute
   '/clientes': typeof AppClientesRoute
   '/dashboard': typeof AppDashboardRoute
+  '/etiquetas': typeof AppEtiquetasRoute
   '/gastos': typeof AppGastosRoute
   '/guia': typeof AppGuiaRoute
   '/inventario': typeof AppInventarioRoute
@@ -165,6 +173,7 @@ export interface FileRoutesById {
   '/_app/categorias': typeof AppCategoriasRoute
   '/_app/clientes': typeof AppClientesRoute
   '/_app/dashboard': typeof AppDashboardRoute
+  '/_app/etiquetas': typeof AppEtiquetasRoute
   '/_app/gastos': typeof AppGastosRoute
   '/_app/guia': typeof AppGuiaRoute
   '/_app/inventario': typeof AppInventarioRoute
@@ -186,6 +195,7 @@ export interface FileRouteTypes {
     | '/categorias'
     | '/clientes'
     | '/dashboard'
+    | '/etiquetas'
     | '/gastos'
     | '/guia'
     | '/inventario'
@@ -205,6 +215,7 @@ export interface FileRouteTypes {
     | '/categorias'
     | '/clientes'
     | '/dashboard'
+    | '/etiquetas'
     | '/gastos'
     | '/guia'
     | '/inventario'
@@ -225,6 +236,7 @@ export interface FileRouteTypes {
     | '/_app/categorias'
     | '/_app/clientes'
     | '/_app/dashboard'
+    | '/_app/etiquetas'
     | '/_app/gastos'
     | '/_app/guia'
     | '/_app/inventario'
@@ -344,6 +356,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppGastosRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/etiquetas': {
+      id: '/_app/etiquetas'
+      path: '/etiquetas'
+      fullPath: '/etiquetas'
+      preLoaderRoute: typeof AppEtiquetasRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/dashboard': {
       id: '/_app/dashboard'
       path: '/dashboard'
@@ -380,6 +399,7 @@ interface AppRouteChildren {
   AppCategoriasRoute: typeof AppCategoriasRoute
   AppClientesRoute: typeof AppClientesRoute
   AppDashboardRoute: typeof AppDashboardRoute
+  AppEtiquetasRoute: typeof AppEtiquetasRoute
   AppGastosRoute: typeof AppGastosRoute
   AppGuiaRoute: typeof AppGuiaRoute
   AppInventarioRoute: typeof AppInventarioRoute
@@ -398,6 +418,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppCategoriasRoute: AppCategoriasRoute,
   AppClientesRoute: AppClientesRoute,
   AppDashboardRoute: AppDashboardRoute,
+  AppEtiquetasRoute: AppEtiquetasRoute,
   AppGastosRoute: AppGastosRoute,
   AppGuiaRoute: AppGuiaRoute,
   AppInventarioRoute: AppInventarioRoute,
