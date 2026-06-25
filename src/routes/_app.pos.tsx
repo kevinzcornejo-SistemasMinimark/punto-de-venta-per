@@ -157,9 +157,9 @@ function POSPage() {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_440px] h-full overflow-hidden bg-muted/30">
+    <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_420px] h-full overflow-hidden bg-muted/30">
       {/* Columna productos */}
-      <div className="flex flex-col min-h-0">
+      <div className="flex flex-col min-h-0 min-w-0">
         <div className="px-5 pt-4 pb-3 space-y-3">
           {/* Toolbar superior */}
           <div className="flex items-center justify-between gap-3">
