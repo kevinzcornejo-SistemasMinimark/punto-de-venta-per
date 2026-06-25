@@ -23,12 +23,12 @@ import { formatPEN } from "@/lib/format";
 import { toast } from "sonner";
 
 const METODOS = [
-  { value: "EFECTIVO", label: "Efectivo", icon: Banknote, color: "bg-emerald-500" },
-  { value: "YAPE", label: "Yape", icon: Smartphone, color: "bg-purple-600" },
-  { value: "PLIN", label: "Plin", icon: Smartphone, color: "bg-cyan-600" },
-  { value: "TARJETA_DEBITO", label: "Débito", icon: CreditCard, color: "bg-blue-600" },
-  { value: "TARJETA_CREDITO", label: "Crédito", icon: CreditCard, color: "bg-indigo-600" },
-  { value: "TRANSFERENCIA", label: "Transfer.", icon: ArrowRightLeft, color: "bg-slate-600" },
+  { value: "EFECTIVO", label: "Efectivo", icon: Banknote, color: "bg-emerald-500", ring: "ring-emerald-300" },
+  { value: "YAPE", label: "Yape", icon: Smartphone, color: "bg-purple-600", ring: "ring-purple-300" },
+  { value: "PLIN", label: "Plin", icon: Smartphone, color: "bg-cyan-600", ring: "ring-cyan-300" },
+  { value: "TARJETA_DEBITO", label: "Débito", icon: CreditCard, color: "bg-blue-600", ring: "ring-blue-300" },
+  { value: "TARJETA_CREDITO", label: "Crédito", icon: CreditCard, color: "bg-indigo-600", ring: "ring-indigo-300" },
+  { value: "TRANSFERENCIA", label: "Transfer.", icon: ArrowRightLeft, color: "bg-slate-600", ring: "ring-slate-300" },
 ] as const;
 
 const BILLETES = [10, 20, 50, 100, 200];
@@ -51,7 +51,7 @@ export function CheckoutModal({
     pagos: Pago[];
   }) => void;
 }) {
-  const [tipo, setTipo] = useState<"BOLETA" | "FACTURA" | "TICKET">("BOLETA");
+  const [tipo, setTipo] = useState<"BOLETA" | "FACTURA" | "TICKET">("TICKET");
   const [doc, setDoc] = useState("");
   const [pagos, setPagos] = useState<Pago[]>([
     { metodo: "EFECTIVO", monto: total },
@@ -62,6 +62,7 @@ export function CheckoutModal({
     if (open) {
       setPagos([{ metodo: "EFECTIVO", monto: total }]);
       setDoc("");
+      setTipo("TICKET");
     }
   }, [open, total]);
 
@@ -74,6 +75,21 @@ export function CheckoutModal({
 
   const updatePago = (i: number, patch: Partial<Pago>) =>
     setPagos((prev) => prev.map((p, idx) => (idx === i ? { ...p, ...patch } : p)));
+
+  // Al cambiar de método: recalcula el monto para cubrir lo que falta
+  // (suma/resta automática). Efectivo permite vuelto, los demás se ajustan exacto.
+  const cambiarMetodo = (i: number, nuevoMetodo: string) => {
+    setPagos((prev) => {
+      const otrosPagados = prev.reduce(
+        (s, p, idx) => (idx === i ? s : s + (p.monto || 0)),
+        0,
+      );
+      const restante = Math.max(0, +(total - otrosPagados).toFixed(2));
+      return prev.map((p, idx) =>
+        idx === i ? { ...p, metodo: nuevoMetodo, monto: restante } : p,
+      );
+    });
+  };
 
   const confirmar = () => {
     if (totalPagado < total - 0.01) {
@@ -96,7 +112,13 @@ export function CheckoutModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl p-0 gap-0 overflow-hidden">
         {/* HEADER GRANDE con total */}
-        <div className={`px-8 py-6 transition-colors ${completo ? "bg-emerald-500" : "bg-primary"} text-white`}>
+        <div
+          className={`px-8 py-6 transition-colors text-white ${
+            completo
+              ? "bg-gradient-to-r from-emerald-500 via-emerald-500 to-emerald-600"
+              : "bg-gradient-to-r from-primary via-primary to-primary/80"
+          }`}
+        >
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold opacity-90">
               Cobrar venta
@@ -244,11 +266,11 @@ export function CheckoutModal({
                       return (
                         <button
                           key={m.value}
-                          onClick={() => updatePago(i, { metodo: m.value })}
+                          onClick={() => cambiarMetodo(i, m.value)}
                           className={`relative h-20 rounded-lg border-2 flex flex-col items-center justify-center gap-1 transition active:scale-95 ${
                             active
-                              ? `${m.color} text-white border-transparent shadow-md`
-                              : "bg-card hover:bg-muted border-border"
+                              ? `${m.color} text-white border-transparent shadow-lg ring-4 ${m.ring}`
+                              : "bg-card hover:bg-muted border-border hover:border-primary/40"
                           }`}
                         >
                           {active && (
