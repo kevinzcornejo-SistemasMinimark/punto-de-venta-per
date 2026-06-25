@@ -212,7 +212,7 @@ function POSPage() {
           </div>
 
           {/* Categorías (dark pills con icono) */}
-          <div className="flex gap-2 overflow-x-auto pb-1 pr-2 -mx-1 px-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <div className="flex flex-wrap gap-1.5 pb-1">
             <CategoryPill
               label="Todas"
               icon={ShoppingBag}
