@@ -5,6 +5,7 @@ import {
   ScanLine,
   Pause,
   Maximize2,
+  Minimize2,
   Smartphone,
   Zap,
   ShoppingBag,
@@ -58,7 +59,31 @@ function POSPage() {
   const [cat, setCat] = useState<string | null>(null);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [ticket, setTicket] = useState<TicketData | null>(null);
+  const [kiosko, setKiosko] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
+
+  // Modo Kiosco: oculta sidebar/header y entra a pantalla completa
+  useEffect(() => {
+    const html = document.documentElement;
+    if (kiosko) {
+      html.classList.add("kiosk");
+      html.requestFullscreen?.().catch(() => {});
+    } else {
+      html.classList.remove("kiosk");
+      if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
+    }
+    const onFs = () => {
+      if (!document.fullscreenElement) {
+        html.classList.remove("kiosk");
+        setKiosko(false);
+      }
+    };
+    document.addEventListener("fullscreenchange", onFs);
+    return () => {
+      document.removeEventListener("fullscreenchange", onFs);
+      html.classList.remove("kiosk");
+    };
+  }, [kiosko]);
 
   // Atajos de teclado
   useEffect(() => {
@@ -192,10 +217,19 @@ function POSPage() {
             <Button
               variant="outline"
               className="h-11 px-4 border-2 font-bold rounded-xl"
-              onClick={() => document.documentElement.requestFullscreen?.()}
+              onClick={() => setKiosko((k) => !k)}
             >
-              <Maximize2 className="h-4 w-4 mr-2" />
-              Modo Kiosco
+              {kiosko ? (
+                <>
+                  <Minimize2 className="h-4 w-4 mr-2" />
+                  Salir Kiosco
+                </>
+              ) : (
+                <>
+                  <Maximize2 className="h-4 w-4 mr-2" />
+                  Modo Kiosco
+                </>
+              )}
             </Button>
           </div>
 
