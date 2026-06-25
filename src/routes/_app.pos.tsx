@@ -312,13 +312,13 @@ function CategoryPill({
   return (
     <button
       onClick={onClick}
-      className={`shrink-0 inline-flex items-center gap-1.5 px-3 h-10 rounded-lg text-xs font-bold whitespace-nowrap border transition active:scale-95 ${
+      className={`shrink-0 inline-flex items-center gap-1 px-2.5 h-8 rounded-md text-[11px] font-bold whitespace-nowrap border transition active:scale-95 ${
         active
           ? "bg-primary text-primary-foreground border-primary shadow-md"
           : "bg-slate-800 text-white border-slate-800 hover:bg-slate-700"
       }`}
     >
-      <Icon className="h-3.5 w-3.5" />
+      <Icon className="h-3 w-3" />
       {label}
     </button>
   );
