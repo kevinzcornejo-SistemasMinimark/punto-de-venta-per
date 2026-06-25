@@ -23,12 +23,12 @@ import { formatPEN } from "@/lib/format";
 import { toast } from "sonner";
 
 const METODOS = [
-  { value: "EFECTIVO", label: "Efectivo", icon: Banknote, color: "bg-emerald-500" },
-  { value: "YAPE", label: "Yape", icon: Smartphone, color: "bg-purple-600" },
-  { value: "PLIN", label: "Plin", icon: Smartphone, color: "bg-cyan-600" },
-  { value: "TARJETA_DEBITO", label: "Débito", icon: CreditCard, color: "bg-blue-600" },
-  { value: "TARJETA_CREDITO", label: "Crédito", icon: CreditCard, color: "bg-indigo-600" },
-  { value: "TRANSFERENCIA", label: "Transfer.", icon: ArrowRightLeft, color: "bg-slate-600" },
+  { value: "EFECTIVO", label: "Efectivo", icon: Banknote, color: "bg-emerald-500", ring: "ring-emerald-300" },
+  { value: "YAPE", label: "Yape", icon: Smartphone, color: "bg-purple-600", ring: "ring-purple-300" },
+  { value: "PLIN", label: "Plin", icon: Smartphone, color: "bg-cyan-600", ring: "ring-cyan-300" },
+  { value: "TARJETA_DEBITO", label: "Débito", icon: CreditCard, color: "bg-blue-600", ring: "ring-blue-300" },
+  { value: "TARJETA_CREDITO", label: "Crédito", icon: CreditCard, color: "bg-indigo-600", ring: "ring-indigo-300" },
+  { value: "TRANSFERENCIA", label: "Transfer.", icon: ArrowRightLeft, color: "bg-slate-600", ring: "ring-slate-300" },
 ] as const;
 
 const BILLETES = [10, 20, 50, 100, 200];
@@ -51,7 +51,7 @@ export function CheckoutModal({
     pagos: Pago[];
   }) => void;
 }) {
-  const [tipo, setTipo] = useState<"BOLETA" | "FACTURA" | "TICKET">("BOLETA");
+  const [tipo, setTipo] = useState<"BOLETA" | "FACTURA" | "TICKET">("TICKET");
   const [doc, setDoc] = useState("");
   const [pagos, setPagos] = useState<Pago[]>([
     { metodo: "EFECTIVO", monto: total },
@@ -62,6 +62,7 @@ export function CheckoutModal({
     if (open) {
       setPagos([{ metodo: "EFECTIVO", monto: total }]);
       setDoc("");
+      setTipo("TICKET");
     }
   }, [open, total]);
 
@@ -74,6 +75,21 @@ export function CheckoutModal({
 
   const updatePago = (i: number, patch: Partial<Pago>) =>
     setPagos((prev) => prev.map((p, idx) => (idx === i ? { ...p, ...patch } : p)));
+
+  // Al cambiar de método: recalcula el monto para cubrir lo que falta
+  // (suma/resta automática). Efectivo permite vuelto, los demás se ajustan exacto.
+  const cambiarMetodo = (i: number, nuevoMetodo: string) => {
+    setPagos((prev) => {
+      const otrosPagados = prev.reduce(
+        (s, p, idx) => (idx === i ? s : s + (p.monto || 0)),
+        0,
+      );
+      const restante = Math.max(0, +(total - otrosPagados).toFixed(2));
+      return prev.map((p, idx) =>
+        idx === i ? { ...p, metodo: nuevoMetodo, monto: restante } : p,
+      );
+    });
+  };
 
   const confirmar = () => {
     if (totalPagado < total - 0.01) {
