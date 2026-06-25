@@ -1,8 +1,38 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Search, Barcode } from "lucide-react";
+import {
+  Search,
+  ScanLine,
+  Pause,
+  Maximize2,
+  Smartphone,
+  Zap,
+  ShoppingBag,
+  Package,
+  CupSoda,
+  Milk,
+  Croissant,
+  SprayCan,
+  Cookie,
+  Beef,
+  Apple,
+  ShoppingBasket,
+  Layers,
+  type LucideIcon,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+const ICONS: Record<string, LucideIcon> = {
+  ShoppingBasket,
+  CupSoda,
+  Milk,
+  Croissant,
+  SprayCan,
+  Cookie,
+  Beef,
+  Apple,
+  Layers,
+};
 import type { MockProducto } from "@/data/mockData";
 import { ProductGrid } from "@/components/pos/ProductGrid";
 import { Cart } from "@/components/pos/Cart";
@@ -127,64 +157,85 @@ function POSPage() {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_460px] h-full overflow-hidden">
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_440px] h-full overflow-hidden bg-muted/30">
       {/* Columna productos */}
       <div className="flex flex-col min-h-0">
-        <div className="p-5 border-b bg-card/40 space-y-4">
-          <div className="flex gap-3">
-            <div className="relative flex-1">
-              <Search className="h-6 w-6 absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                ref={searchRef}
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Buscar producto o código de barras… (F1)"
-                className="pl-12 h-16 text-lg font-medium"
-              />
-            </div>
-            <Button variant="outline" className="h-16 px-6 text-base font-bold">
-              <Barcode className="h-6 w-6 mr-2" />
-              Escanear
+        <div className="px-5 pt-4 pb-3 space-y-3">
+          {/* Toolbar superior */}
+          <div className="flex items-center justify-between gap-3">
+            <Button
+              variant="outline"
+              className="h-11 px-4 border-2 border-amber-400/70 text-amber-600 hover:bg-amber-50 hover:text-amber-700 font-bold rounded-xl"
+            >
+              <Pause className="h-4 w-4 mr-2" />
+              Pausar Ticket
+            </Button>
+            <Button
+              variant="outline"
+              className="h-11 px-4 border-2 font-bold rounded-xl"
+              onClick={() => document.documentElement.requestFullscreen?.()}
+            >
+              <Maximize2 className="h-4 w-4 mr-2" />
+              Modo Kiosco
             </Button>
           </div>
 
+          {/* Barcode bar */}
+          <div className="relative">
+            <ScanLine className="h-6 w-6 absolute left-4 top-1/2 -translate-y-1/2 text-primary" />
+            <Input
+              ref={searchRef}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Escanea o ingresa código de barras y presiona Enter"
+              className="pl-12 h-14 text-base font-medium rounded-xl border-2 border-primary/30 focus-visible:border-primary bg-card"
+            />
+          </div>
+
+          {/* Categorías (dark pills con icono) */}
           <div className="flex gap-2 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            <button
+            <CategoryPill
+              label="Todas"
+              icon={ShoppingBag}
+              active={cat === null}
               onClick={() => setCat(null)}
-              className={`px-5 py-3 rounded-xl text-base font-bold whitespace-nowrap border-2 transition ${
-                cat === null
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-card hover:bg-muted"
-              }`}
-            >
-              Todas
-            </button>
-            {categorias.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => setCat(c.id)}
-                className={`px-5 py-3 rounded-xl text-base font-bold whitespace-nowrap border-2 transition ${
-                  cat === c.id
-                    ? "text-white border-transparent"
-                    : "bg-card hover:bg-muted"
-                }`}
-                style={
-                  cat === c.id
-                    ? { backgroundColor: c.color }
-                    : { borderColor: c.color + "55", color: c.color }
-                }
-              >
-                {c.nombre}
-              </button>
-            ))}
+            />
+            {categorias.map((c) => {
+              const Icon = ICONS[c.icono] ?? Package;
+              return (
+                <CategoryPill
+                  key={c.id}
+                  label={c.nombre}
+                  icon={Icon}
+                  active={cat === c.id}
+                  onClick={() => setCat(c.id)}
+                />
+              );
+            })}
+          </div>
+
+          {/* Buscador + accesos rápidos */}
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Buscar producto (nombre, marca, categoría)…"
+                className="pl-10 h-11 rounded-xl bg-card"
+              />
+            </div>
+            <QuickAction icon={Smartphone} label="Recarga Celular" color="text-purple-600" />
+            <QuickAction icon={Zap} label="Pago de Servicio" color="text-blue-600" />
+            <QuickAction icon={ShoppingBag} label="Bolsa Plástica" color="text-emerald-600" />
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-5">
+        <div className="flex-1 overflow-y-auto px-5 pb-5">
           <ProductGrid productos={productos} onPick={handlePick} />
         </div>
 
-        <div className="border-t bg-muted/40 px-5 py-3 text-sm font-semibold text-muted-foreground flex items-center justify-between">
+        <div className="border-t bg-card px-5 py-2 text-xs font-semibold text-muted-foreground flex items-center justify-between">
           <span>Atajos: F1 buscar · F2 cobrar · Escanea para agregar</span>
           <span>
             {productos.length} producto{productos.length !== 1 && "s"} ·{" "}
@@ -217,5 +268,51 @@ function POSPage() {
         onConfirm={confirmarVenta}
       />
     </div>
+  );
+}
+
+function CategoryPill({
+  label,
+  icon: Icon,
+  active,
+  onClick,
+}: {
+  label: string;
+  icon: LucideIcon;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`shrink-0 inline-flex items-center gap-2 px-4 h-12 rounded-xl text-sm font-bold whitespace-nowrap border transition active:scale-95 ${
+        active
+          ? "bg-primary text-primary-foreground border-primary shadow-md"
+          : "bg-slate-800 text-white border-slate-800 hover:bg-slate-700"
+      }`}
+    >
+      <Icon className="h-4 w-4" />
+      {label}
+    </button>
+  );
+}
+
+function QuickAction({
+  icon: Icon,
+  label,
+  color,
+}: {
+  icon: LucideIcon;
+  label: string;
+  color: string;
+}) {
+  return (
+    <button
+      className="shrink-0 hidden md:inline-flex items-center gap-2 h-11 px-3 rounded-xl bg-card border text-sm font-bold hover:bg-muted transition"
+      title={label}
+    >
+      <Icon className={`h-4 w-4 ${color}`} />
+      {label}
+    </button>
   );
 }
