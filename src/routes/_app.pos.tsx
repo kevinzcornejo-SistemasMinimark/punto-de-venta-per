@@ -157,9 +157,9 @@ function POSPage() {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_440px] h-full overflow-hidden bg-muted/30">
+    <div className="flex flex-col lg:flex-row h-full overflow-hidden bg-muted/30">
       {/* Columna productos */}
-      <div className="flex flex-col min-h-0">
+      <div className="flex-1 min-w-0 flex flex-col min-h-0">
         <div className="px-5 pt-4 pb-3 space-y-3">
           {/* Toolbar superior */}
           <div className="flex items-center justify-between gap-3">
@@ -245,6 +245,7 @@ function POSPage() {
       </div>
 
       {/* Columna carrito */}
+      <div className="w-full lg:w-[420px] shrink-0 border-t lg:border-t-0 lg:border-l">
       <Cart
         items={cart.items}
         onInc={(id) => {
@@ -260,6 +261,7 @@ function POSPage() {
         onCheckout={() => setCheckoutOpen(true)}
         onClear={cart.clear}
       />
+      </div>
 
       <CheckoutModal
         open={checkoutOpen}
