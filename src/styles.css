@@ -142,3 +142,9 @@
     color: var(--color-foreground);
   }
 }
+
+/* Modo Kiosco: oculta sidebar y header para mostrar solo el POS */
+html.kiosk aside,
+html.kiosk header {
+  display: none !important;
+}
