@@ -1,5 +1,4 @@
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Plus } from "lucide-react";
 import { formatPEN } from "@/lib/format";
 import type { MockProducto } from "@/data/mockData";
 
@@ -18,31 +17,60 @@ export function ProductGrid({
     );
   }
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
       {productos.map((p) => {
-        const lowStock = p.stock <= p.stock_minimo;
+        const agotado = p.stock <= 0;
+        const bajo = !agotado && p.stock <= p.stock_minimo;
+        const dotColor = agotado
+          ? "bg-destructive"
+          : bajo
+            ? "bg-amber-400"
+            : "bg-emerald-500";
         return (
-          <button key={p.id} onClick={() => onPick(p)} className="text-left active:scale-95 transition-transform">
-            <Card className="p-4 hover:border-primary hover:shadow-xl border-2 transition group cursor-pointer h-full flex flex-col">
-              <div className="aspect-square rounded-xl bg-gradient-to-br from-primary/15 to-accent/15 grid place-items-center mb-3 text-5xl font-black text-primary/70">
-                {p.nombre.slice(0, 2).toUpperCase()}
-              </div>
-              <div className="text-base font-bold line-clamp-2 min-h-[3rem] leading-tight">
-                {p.nombre}
-              </div>
-              <div className="mt-2 flex items-center justify-between">
-                <span className="font-extrabold text-xl text-primary tabular-nums">
-                  {formatPEN(p.precio_venta)}
+          <div
+            key={p.id}
+            onClick={() => !agotado && onPick(p)}
+            className={`relative rounded-2xl border bg-card p-3 transition shadow-sm hover:shadow-md hover:border-primary/50 active:scale-[0.98] flex flex-col ${
+              agotado ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+            }`}
+          >
+            <span
+              className={`absolute top-2 right-2 h-3 w-3 rounded-full ring-2 ring-background ${dotColor}`}
+              title={`${p.stock} ${p.unidad}`}
+            />
+            <div className="aspect-square rounded-xl bg-muted/50 grid place-items-center mb-2 overflow-hidden">
+              {p.imagen ? (
+                <img
+                  src={p.imagen}
+                  alt={p.nombre}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="text-3xl font-black text-muted-foreground/50">
+                  {p.nombre.slice(0, 2).toUpperCase()}
                 </span>
-                <Badge
-                  variant={lowStock ? "destructive" : "secondary"}
-                  className="text-xs px-2 py-0.5 font-bold"
-                >
-                  {p.stock} {p.unidad}
-                </Badge>
-              </div>
-            </Card>
-          </button>
+              )}
+            </div>
+            <div className="text-sm font-bold leading-tight line-clamp-2 min-h-[2.4rem]">
+              {p.nombre}
+            </div>
+            <div className="mt-1 flex items-center justify-between">
+              <span className="font-extrabold text-lg text-primary tabular-nums">
+                {formatPEN(p.precio_venta)}
+              </span>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!agotado) onPick(p);
+                }}
+                disabled={agotado}
+                className="h-9 w-9 rounded-full bg-primary text-primary-foreground grid place-items-center shadow-md hover:scale-105 active:scale-95 transition disabled:opacity-40"
+                aria-label={`Agregar ${p.nombre}`}
+              >
+                <Plus className="h-5 w-5" strokeWidth={3} />
+              </button>
+            </div>
+          </div>
         );
       })}
     </div>

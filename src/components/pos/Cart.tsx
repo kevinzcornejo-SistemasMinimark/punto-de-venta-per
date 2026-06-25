@@ -1,4 +1,4 @@
-import { Minus, Plus, Trash2, ShoppingCart, CreditCard } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingCart, CreditCard, Percent } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatPEN } from "@/lib/format";
 import type { CartItem } from "@/hooks/usePOSCart";
@@ -11,6 +11,7 @@ export function Cart({
   totales,
   onCheckout,
   onClear,
+  onDescuento,
 }: {
   items: CartItem[];
   onInc: (id: string) => void;
@@ -19,25 +20,64 @@ export function Cart({
   totales: { subtotal: number; igv: number; total: number; cantidadItems: number };
   onCheckout: () => void;
   onClear: () => void;
+  onDescuento?: () => void;
 }) {
   return (
     <div className="flex flex-col h-full bg-card border-l">
-      <div className="p-5 border-b flex items-center justify-between bg-muted/40">
-        <div className="flex items-center gap-3 font-extrabold text-xl">
+      {/* Header */}
+      <div className="p-5 flex items-center justify-between">
+        <div className="flex items-center gap-3">
           <ShoppingCart className="h-7 w-7 text-primary" />
-          Carrito
-          <span className="text-sm text-muted-foreground font-semibold">
-            · {totales.cantidadItems} ítems
-          </span>
+          <span className="font-extrabold text-2xl">Carrito</span>
+          {totales.cantidadItems > 0 && (
+            <span className="h-7 min-w-7 px-2 rounded-full bg-primary text-primary-foreground text-sm font-extrabold grid place-items-center">
+              {totales.cantidadItems}
+            </span>
+          )}
         </div>
         {items.length > 0 && (
-          <Button variant="ghost" size="lg" onClick={onClear} className="text-base text-destructive hover:bg-destructive/10">
-            <Trash2 className="h-5 w-5 mr-1" /> Vaciar
-          </Button>
+          <button
+            onClick={onClear}
+            className="flex items-center gap-1.5 text-sm font-semibold text-destructive hover:bg-destructive/10 px-3 py-1.5 rounded-lg"
+          >
+            <Trash2 className="h-4 w-4" /> Vaciar
+          </button>
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto divide-y">
+      {/* Totales (arriba, como la foto) */}
+      <div className="px-5 pb-4 border-b space-y-3">
+        <div className="flex items-center justify-between text-base">
+          <span className="text-muted-foreground font-medium">Subtotal</span>
+          <span className="font-extrabold tabular-nums">{formatPEN(totales.subtotal + totales.igv)}</span>
+        </div>
+        <div className="flex items-baseline justify-between">
+          <span className="text-3xl font-black">TOTAL</span>
+          <span className="text-3xl font-black text-primary tabular-nums">
+            {formatPEN(totales.total)}
+          </span>
+        </div>
+        <Button
+          className="w-full h-16 text-xl font-extrabold rounded-xl shadow-md bg-primary hover:bg-primary/90"
+          disabled={items.length === 0}
+          onClick={onCheckout}
+        >
+          <CreditCard className="h-6 w-6 mr-2" />
+          Cobrar
+        </Button>
+        <Button
+          variant="outline"
+          className="w-full h-12 text-base font-bold rounded-xl border-2"
+          disabled={items.length === 0}
+          onClick={onDescuento}
+        >
+          <Percent className="h-5 w-5 mr-2" />
+          Descuento
+        </Button>
+      </div>
+
+      {/* Items abajo */}
+      <div className="flex-1 overflow-y-auto p-3 space-y-2">
         {items.length === 0 ? (
           <div className="text-center text-base text-muted-foreground py-20 px-4">
             <ShoppingCart className="h-16 w-16 mx-auto mb-3 opacity-20" />
@@ -45,75 +85,59 @@ export function Cart({
           </div>
         ) : (
           items.map((i) => (
-            <div key={i.producto.id} className="p-4 flex items-start gap-3">
-              <div className="flex-1 min-w-0">
-                <div className="text-base font-bold truncate">
-                  {i.producto.nombre}
-                </div>
-                <div className="text-sm text-muted-foreground mb-2">
-                  {formatPEN(i.producto.precio_venta)} c/u
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    className="h-11 w-11"
-                    onClick={() => onDec(i.producto.id)}
-                  >
-                    <Minus className="h-5 w-5" />
-                  </Button>
-                  <span className="w-12 text-center text-lg font-extrabold tabular-nums">
-                    {i.cantidad}
-                  </span>
-                  <Button
-                    size="icon"
-                    className="h-11 w-11"
-                    onClick={() => onInc(i.producto.id)}
-                  >
-                    <Plus className="h-5 w-5" />
-                  </Button>
-                </div>
+            <div
+              key={i.producto.id}
+              className="rounded-xl border bg-card p-3 flex items-center gap-3"
+            >
+              <div className="h-12 w-12 rounded-lg bg-muted grid place-items-center shrink-0 text-xs font-black text-muted-foreground">
+                {i.producto.imagen ? (
+                  <img src={i.producto.imagen} alt={i.producto.nombre} className="h-full w-full object-cover rounded-lg" />
+                ) : (
+                  i.producto.nombre.slice(0, 2).toUpperCase()
+                )}
               </div>
-              <div className="text-right flex flex-col items-end gap-2">
-                <div className="font-extrabold text-lg text-primary tabular-nums">
-                  {formatPEN(i.producto.precio_venta * i.cantidad - i.descuento)}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-2">
+                  <span className="text-sm font-bold truncate">{i.producto.nombre}</span>
+                  <span className="text-xs text-muted-foreground shrink-0">
+                    {formatPEN(i.producto.precio_venta)} c/u
+                  </span>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-10 w-10 text-destructive hover:bg-destructive/10"
-                  onClick={() => onRemove(i.producto.id)}
-                >
-                  <Trash2 className="h-5 w-5" />
-                </Button>
+                <div className="mt-2 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => onDec(i.producto.id)}
+                      className="h-9 w-9 rounded-lg border bg-card grid place-items-center hover:bg-muted active:scale-95"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </button>
+                    <span className="w-8 text-center text-base font-extrabold tabular-nums">
+                      {i.cantidad}
+                    </span>
+                    <button
+                      onClick={() => onInc(i.producto.id)}
+                      className="h-9 w-9 rounded-lg bg-primary text-primary-foreground grid place-items-center hover:bg-primary/90 active:scale-95"
+                    >
+                      <Plus className="h-4 w-4" strokeWidth={3} />
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-extrabold text-base text-primary tabular-nums">
+                      {formatPEN(i.producto.precio_venta * i.cantidad - i.descuento)}
+                    </span>
+                    <button
+                      onClick={() => onRemove(i.producto.id)}
+                      className="h-9 w-9 rounded-lg bg-destructive/10 text-destructive grid place-items-center hover:bg-destructive/20"
+                      aria-label="Eliminar"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           ))
         )}
-      </div>
-
-      <div className="border-t p-5 space-y-2 bg-muted/30">
-        <div className="flex justify-between text-base text-muted-foreground">
-          <span>Subtotal</span>
-          <span className="tabular-nums">{formatPEN(totales.subtotal)}</span>
-        </div>
-        <div className="flex justify-between text-base text-muted-foreground">
-          <span>IGV (18%)</span>
-          <span className="tabular-nums">{formatPEN(totales.igv)}</span>
-        </div>
-        <div className="flex justify-between items-baseline pt-3 border-t mt-2">
-          <span className="text-2xl font-extrabold">TOTAL</span>
-          <span className="text-4xl font-black text-primary tabular-nums">{formatPEN(totales.total)}</span>
-        </div>
-        <Button
-          className="w-full mt-4 h-20 text-2xl font-extrabold shadow-lg"
-          disabled={items.length === 0}
-          onClick={onCheckout}
-        >
-          <CreditCard className="h-7 w-7 mr-3" />
-          COBRAR
-        </Button>
-        <p className="text-center text-xs text-muted-foreground mt-1">Atajo: F2</p>
       </div>
     </div>
   );
