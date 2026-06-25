@@ -212,7 +212,7 @@ function POSPage() {
           </div>
 
           {/* Categorías (dark pills con icono) */}
-          <div className="flex gap-2 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <div className="flex gap-2 overflow-x-auto pb-1 pr-2 -mx-1 px-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             <CategoryPill
               label="Todas"
               icon={ShoppingBag}
@@ -312,13 +312,13 @@ function CategoryPill({
   return (
     <button
       onClick={onClick}
-      className={`shrink-0 inline-flex items-center gap-2 px-4 h-12 rounded-xl text-sm font-bold whitespace-nowrap border transition active:scale-95 ${
+      className={`shrink-0 inline-flex items-center gap-1.5 px-3 h-10 rounded-lg text-xs font-bold whitespace-nowrap border transition active:scale-95 ${
         active
           ? "bg-primary text-primary-foreground border-primary shadow-md"
           : "bg-slate-800 text-white border-slate-800 hover:bg-slate-700"
       }`}
     >
-      <Icon className="h-4 w-4" />
+      <Icon className="h-3.5 w-3.5" />
       {label}
     </button>
   );
