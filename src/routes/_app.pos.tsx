@@ -127,7 +127,7 @@ function POSPage() {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_460px] h-[calc(100vh-3.5rem)]">
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_460px] h-[calc(100dvh-3.5rem)] overflow-hidden">
       {/* Columna productos */}
       <div className="flex flex-col min-h-0">
         <div className="p-5 border-b bg-card/40 space-y-4">
@@ -148,7 +148,7 @@ function POSPage() {
             </Button>
           </div>
 
-          <div className="flex gap-2 overflow-x-auto pb-1">
+          <div className="flex gap-2 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             <button
               onClick={() => setCat(null)}
               className={`px-5 py-3 rounded-xl text-base font-bold whitespace-nowrap border-2 transition ${
