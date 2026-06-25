@@ -288,6 +288,12 @@ function POSPage() {
         total={cart.totales.total}
         onConfirm={confirmarVenta}
       />
+
+      <TicketModal
+        open={!!ticket}
+        onOpenChange={(o) => !o && setTicket(null)}
+        ticket={ticket}
+      />
     </div>
   );
 }
