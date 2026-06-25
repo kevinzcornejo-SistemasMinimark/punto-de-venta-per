@@ -127,7 +127,7 @@ function POSPage() {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_460px] h-[calc(100dvh-3.5rem)] overflow-hidden">
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_460px] h-full overflow-hidden">
       {/* Columna productos */}
       <div className="flex flex-col min-h-0">
         <div className="p-5 border-b bg-card/40 space-y-4">
