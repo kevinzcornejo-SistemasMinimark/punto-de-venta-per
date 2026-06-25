@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -18,18 +18,20 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Plus, X, Banknote, Smartphone, CreditCard } from "lucide-react";
+import { Plus, X, Banknote, Smartphone, CreditCard, Check, ArrowRightLeft } from "lucide-react";
 import { formatPEN } from "@/lib/format";
 import { toast } from "sonner";
 
 const METODOS = [
-  { value: "EFECTIVO", label: "Efectivo", icon: Banknote },
-  { value: "YAPE", label: "Yape", icon: Smartphone },
-  { value: "PLIN", label: "Plin", icon: Smartphone },
-  { value: "TARJETA_DEBITO", label: "Tarjeta Débito", icon: CreditCard },
-  { value: "TARJETA_CREDITO", label: "Tarjeta Crédito", icon: CreditCard },
-  { value: "TRANSFERENCIA", label: "Transferencia", icon: CreditCard },
+  { value: "EFECTIVO", label: "Efectivo", icon: Banknote, color: "bg-emerald-500" },
+  { value: "YAPE", label: "Yape", icon: Smartphone, color: "bg-purple-600" },
+  { value: "PLIN", label: "Plin", icon: Smartphone, color: "bg-cyan-600" },
+  { value: "TARJETA_DEBITO", label: "Débito", icon: CreditCard, color: "bg-blue-600" },
+  { value: "TARJETA_CREDITO", label: "Crédito", icon: CreditCard, color: "bg-indigo-600" },
+  { value: "TRANSFERENCIA", label: "Transfer.", icon: ArrowRightLeft, color: "bg-slate-600" },
 ] as const;
+
+const BILLETES = [10, 20, 50, 100, 200];
 
 type Pago = { metodo: string; monto: number; referencia?: string };
 
@@ -55,9 +57,18 @@ export function CheckoutModal({
     { metodo: "EFECTIVO", monto: total },
   ]);
 
+  // Reset al abrir
+  useEffect(() => {
+    if (open) {
+      setPagos([{ metodo: "EFECTIVO", monto: total }]);
+      setDoc("");
+    }
+  }, [open, total]);
+
   const totalPagado = pagos.reduce((s, p) => s + (p.monto || 0), 0);
   const vuelto = totalPagado - total;
   const falta = total - totalPagado;
+  const completo = totalPagado >= total - 0.01;
   const serie =
     tipo === "BOLETA" ? "B001" : tipo === "FACTURA" ? "F001" : "T001";
 
@@ -83,31 +94,59 @@ export function CheckoutModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Cobrar venta</DialogTitle>
-        </DialogHeader>
+      <DialogContent className="max-w-4xl p-0 gap-0 overflow-hidden">
+        {/* HEADER GRANDE con total */}
+        <div className={`px-8 py-6 transition-colors ${completo ? "bg-emerald-500" : "bg-primary"} text-white`}>
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold opacity-90">
+              Cobrar venta
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mt-2 flex items-end justify-between gap-4">
+            <div>
+              <div className="text-sm uppercase tracking-wider opacity-80">Total a cobrar</div>
+              <div className="text-6xl font-black tabular-nums leading-none mt-1">
+                {formatPEN(total)}
+              </div>
+            </div>
+            <div className="text-right">
+              {completo ? (
+                <div className="space-y-1">
+                  <div className="text-sm uppercase tracking-wider opacity-80">Vuelto</div>
+                  <div className="text-4xl font-black tabular-nums">{formatPEN(vuelto)}</div>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  <div className="text-sm uppercase tracking-wider opacity-80">Falta</div>
+                  <div className="text-4xl font-black tabular-nums">{formatPEN(falta)}</div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
 
-        <div className="grid md:grid-cols-2 gap-5">
-          <div>
-            <Label>Tipo de comprobante</Label>
-            <Tabs
+        <div className="grid md:grid-cols-[1fr_1.2fr] gap-0">
+          {/* Columna comprobante */}
+          <div className="p-6 border-r space-y-5">
+            <div>
+              <Label className="text-base font-bold mb-2 block">Tipo de comprobante</Label>
+              <Tabs
               value={tipo}
               onValueChange={(v) => setTipo(v as typeof tipo)}
               className="mt-2"
             >
-              <TabsList className="grid grid-cols-3 w-full">
-                <TabsTrigger value="BOLETA">Boleta</TabsTrigger>
-                <TabsTrigger value="FACTURA">Factura</TabsTrigger>
-                <TabsTrigger value="TICKET">Ticket</TabsTrigger>
+              <TabsList className="grid grid-cols-3 w-full h-14">
+                <TabsTrigger value="BOLETA" className="text-base font-bold">Boleta</TabsTrigger>
+                <TabsTrigger value="FACTURA" className="text-base font-bold">Factura</TabsTrigger>
+                <TabsTrigger value="TICKET" className="text-base font-bold">Ticket</TabsTrigger>
               </TabsList>
               <TabsContent value={tipo} className="mt-3 space-y-2">
-                <div className="text-xs text-muted-foreground">
-                  Serie: <span className="font-mono font-semibold">{serie}</span>
+                <div className="text-sm text-muted-foreground">
+                  Serie: <span className="font-mono font-bold text-foreground">{serie}</span>
                 </div>
                 {tipo !== "TICKET" && (
                   <div className="space-y-1.5">
-                    <Label>{tipo === "FACTURA" ? "RUC" : "DNI / RUC / CE"}</Label>
+                    <Label className="text-sm font-semibold">{tipo === "FACTURA" ? "RUC" : "DNI / RUC / CE"}</Label>
                     <Input
                       value={doc}
                       onChange={(e) =>
@@ -115,41 +154,74 @@ export function CheckoutModal({
                       }
                       placeholder={tipo === "FACTURA" ? "20XXXXXXXXX" : "DNI 8 dígitos"}
                       maxLength={tipo === "FACTURA" ? 11 : 12}
+                      className="h-12 text-lg font-mono"
                     />
                   </div>
                 )}
               </TabsContent>
             </Tabs>
+            </div>
 
-            <div className="mt-5 rounded-lg bg-muted p-4 space-y-1.5">
-              <div className="flex justify-between text-sm">
-                <span>Total a cobrar</span>
-                <span className="font-bold">{formatPEN(total)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span>Pagado</span>
-                <span className="font-bold">{formatPEN(totalPagado)}</span>
-              </div>
-              {vuelto > 0 ? (
-                <div className="flex justify-between text-sm text-emerald-600">
-                  <span>Vuelto</span>
-                  <span className="font-bold">{formatPEN(vuelto)}</span>
+            {/* Billetes rápidos (solo si hay un pago en efectivo seleccionado) */}
+            {pagos[0]?.metodo === "EFECTIVO" && pagos.length === 1 && (
+              <div>
+                <Label className="text-base font-bold mb-2 block">Efectivo recibido</Label>
+                <div className="grid grid-cols-3 gap-2 mb-2">
+                  <Button
+                    variant="outline"
+                    className="h-14 text-base font-bold border-2"
+                    onClick={() => updatePago(0, { monto: total })}
+                  >
+                    Exacto
+                  </Button>
+                  {BILLETES.slice(0, 2).map((b) => (
+                    <Button
+                      key={b}
+                      variant="outline"
+                      className="h-14 text-base font-bold border-2"
+                      onClick={() => updatePago(0, { monto: b })}
+                    >
+                      S/ {b}
+                    </Button>
+                  ))}
                 </div>
-              ) : falta > 0 ? (
-                <div className="flex justify-between text-sm text-destructive">
-                  <span>Falta</span>
-                  <span className="font-bold">{formatPEN(falta)}</span>
+                <div className="grid grid-cols-3 gap-2">
+                  {BILLETES.slice(2).map((b) => (
+                    <Button
+                      key={b}
+                      variant="outline"
+                      className="h-14 text-base font-bold border-2"
+                      onClick={() => updatePago(0, { monto: b })}
+                    >
+                      S/ {b}
+                    </Button>
+                  ))}
                 </div>
-              ) : null}
+              </div>
+            )}
+
+            <div className="rounded-xl bg-muted p-4 space-y-2 text-base">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Pagado</span>
+                <span className="font-extrabold tabular-nums">{formatPEN(totalPagado)}</span>
+              </div>
+              <div className="flex justify-between pt-2 border-t">
+                <span className="text-muted-foreground">Total</span>
+                <span className="font-extrabold tabular-nums">{formatPEN(total)}</span>
+              </div>
             </div>
           </div>
 
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <Label>Pagos {pagos.length > 1 && <Badge variant="secondary" className="ml-1">MIXTO</Badge>}</Label>
+          {/* Columna pagos */}
+          <div className="p-6 space-y-4 bg-muted/30">
+            <div className="flex items-center justify-between">
+              <Label className="text-base font-bold">
+                Método de pago {pagos.length > 1 && <Badge variant="secondary" className="ml-2">MIXTO</Badge>}
+              </Label>
               <Button
                 size="sm"
                 variant="outline"
+                className="h-9"
                 onClick={() =>
                   setPagos((p) => [
                     ...p,
@@ -157,66 +229,88 @@ export function CheckoutModal({
                   ])
                 }
               >
-                <Plus className="h-3.5 w-3.5 mr-1" /> Pago
+                <Plus className="h-4 w-4 mr-1" /> Dividir
               </Button>
             </div>
 
-            <div className="space-y-2 max-h-[300px] overflow-y-auto">
+            <div className="space-y-4 max-h-[420px] overflow-y-auto pr-1">
               {pagos.map((p, i) => (
-                <div key={i} className="grid grid-cols-[1fr_110px_auto] gap-2 items-end">
-                  <div>
-                    <Label className="text-xs">Método</Label>
-                    <Select
-                      value={p.metodo}
-                      onValueChange={(v) => updatePago(i, { metodo: v })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {METODOS.map((m) => (
-                          <SelectItem key={m.value} value={m.value}>
-                            {m.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                <div key={i} className="bg-card rounded-xl p-3 border-2 space-y-3">
+                  {/* Grid de métodos con iconos grandes */}
+                  <div className="grid grid-cols-3 gap-2">
+                    {METODOS.map((m) => {
+                      const Icon = m.icon;
+                      const active = p.metodo === m.value;
+                      return (
+                        <button
+                          key={m.value}
+                          onClick={() => updatePago(i, { metodo: m.value })}
+                          className={`relative h-20 rounded-lg border-2 flex flex-col items-center justify-center gap-1 transition active:scale-95 ${
+                            active
+                              ? `${m.color} text-white border-transparent shadow-md`
+                              : "bg-card hover:bg-muted border-border"
+                          }`}
+                        >
+                          {active && (
+                            <Check className="absolute top-1 right-1 h-4 w-4" />
+                          )}
+                          <Icon className="h-6 w-6" />
+                          <span className="text-xs font-bold">{m.label}</span>
+                        </button>
+                      );
+                    })}
                   </div>
-                  <div>
-                    <Label className="text-xs">Monto</Label>
-                    <Input
-                      type="number"
-                      step="0.10"
-                      min="0"
-                      value={p.monto}
-                      onChange={(e) =>
-                        updatePago(i, { monto: parseFloat(e.target.value) || 0 })
-                      }
-                    />
+
+                  <div className="flex items-end gap-2">
+                    <div className="flex-1">
+                      <Label className="text-xs font-bold uppercase text-muted-foreground">Monto</Label>
+                      <Input
+                        type="number"
+                        step="0.10"
+                        min="0"
+                        value={p.monto}
+                        onChange={(e) =>
+                          updatePago(i, { monto: parseFloat(e.target.value) || 0 })
+                        }
+                        className="h-14 text-2xl font-extrabold tabular-nums text-right"
+                      />
+                    </div>
+                    {pagos.length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-14 w-14 text-destructive hover:bg-destructive/10"
+                        onClick={() =>
+                          setPagos((prev) => prev.filter((_, idx) => idx !== i))
+                        }
+                      >
+                        <X className="h-6 w-6" />
+                      </Button>
+                    )}
                   </div>
-                  {pagos.length > 1 && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() =>
-                        setPagos((prev) => prev.filter((_, idx) => idx !== i))
-                      }
-                    >
-                      <X className="h-4 w-4 text-destructive" />
-                    </Button>
-                  )}
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        <DialogFooter className="mt-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancelar
+        <DialogFooter className="px-6 py-4 border-t bg-card gap-3 sm:gap-3">
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            className="h-16 px-8 text-lg font-bold flex-1 sm:flex-initial"
+          >
+            <X className="h-5 w-5 mr-2" /> Cancelar
           </Button>
-          <Button onClick={confirmar} className="min-w-[160px]">
-            Confirmar {formatPEN(total)}
+          <Button
+            onClick={confirmar}
+            disabled={!completo}
+            className={`h-16 px-8 text-xl font-extrabold flex-1 shadow-lg transition ${
+              completo ? "bg-emerald-500 hover:bg-emerald-600 text-white" : ""
+            }`}
+          >
+            <Check className="h-6 w-6 mr-2" />
+            {completo ? `CONFIRMAR ${formatPEN(total)}` : `Falta ${formatPEN(falta)}`}
           </Button>
         </DialogFooter>
       </DialogContent>
