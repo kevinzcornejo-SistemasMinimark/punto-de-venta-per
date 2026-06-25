@@ -37,6 +37,7 @@ import type { MockProducto } from "@/data/mockData";
 import { ProductGrid } from "@/components/pos/ProductGrid";
 import { Cart } from "@/components/pos/Cart";
 import { CheckoutModal } from "@/components/pos/CheckoutModal";
+import { TicketModal, type TicketData } from "@/components/pos/TicketModal";
 import { usePOSCart } from "@/hooks/usePOSCart";
 import { toast } from "sonner";
 import { formatPEN } from "@/lib/format";
@@ -56,6 +57,7 @@ function POSPage() {
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState<string | null>(null);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [ticket, setTicket] = useState<TicketData | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
 
   // Atajos de teclado
@@ -123,11 +125,27 @@ function POSPage() {
   const confirmarVenta = async (data: {
     tipo_comprobante: string;
     serie: string;
+    documento_cliente?: string;
     pagos: { metodo: string; monto: number }[];
   }) => {
+    const metodoPrincipal = data.pagos.length > 1
+      ? "MIXTO"
+      : (data.pagos[0]?.metodo ?? "EFECTIVO");
+    const baseTicket = {
+      tipo: data.tipo_comprobante as TicketData["tipo"],
+      serie: data.serie,
+      fecha: new Date(),
+      items: cart.items,
+      subtotal: cart.totales.subtotal,
+      igv: cart.totales.igv,
+      total: cart.totales.total,
+      metodoPago: metodoPrincipal.replace("_", " "),
+      documentoCliente: data.documento_cliente,
+    };
     if (isDemo || !user) {
       setCheckoutOpen(false);
       const correlativo = Math.floor(Math.random() * 9000 + 1000);
+      setTicket({ ...baseTicket, correlativo });
       cart.clear();
       toast.success(
         `Venta demo · ${data.tipo_comprobante} ${data.serie}-${correlativo}`,
@@ -146,6 +164,7 @@ function POSPage() {
         cajero_id: user.id,
       });
       setCheckoutOpen(false);
+      setTicket({ ...baseTicket, correlativo: venta.correlativo });
       cart.clear();
       refresh();
       toast.success(
@@ -268,6 +287,12 @@ function POSPage() {
         onOpenChange={setCheckoutOpen}
         total={cart.totales.total}
         onConfirm={confirmarVenta}
+      />
+
+      <TicketModal
+        open={!!ticket}
+        onOpenChange={(o) => !o && setTicket(null)}
+        ticket={ticket}
       />
     </div>
   );
