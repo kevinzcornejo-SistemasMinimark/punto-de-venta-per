@@ -18,25 +18,25 @@ export function ProductGrid({
     );
   }
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
       {productos.map((p) => {
         const lowStock = p.stock <= p.stock_minimo;
         return (
-          <button key={p.id} onClick={() => onPick(p)} className="text-left">
-            <Card className="p-3 hover:border-primary hover:shadow-md transition group cursor-pointer h-full flex flex-col">
-              <div className="aspect-square rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 grid place-items-center mb-2 text-3xl font-bold text-primary/70">
+          <button key={p.id} onClick={() => onPick(p)} className="text-left active:scale-95 transition-transform">
+            <Card className="p-4 hover:border-primary hover:shadow-xl border-2 transition group cursor-pointer h-full flex flex-col">
+              <div className="aspect-square rounded-xl bg-gradient-to-br from-primary/15 to-accent/15 grid place-items-center mb-3 text-5xl font-black text-primary/70">
                 {p.nombre.slice(0, 2).toUpperCase()}
               </div>
-              <div className="text-xs font-semibold line-clamp-2 min-h-[2rem]">
+              <div className="text-base font-bold line-clamp-2 min-h-[3rem] leading-tight">
                 {p.nombre}
               </div>
-              <div className="mt-1 flex items-center justify-between">
-                <span className="font-bold text-primary">
+              <div className="mt-2 flex items-center justify-between">
+                <span className="font-extrabold text-xl text-primary tabular-nums">
                   {formatPEN(p.precio_venta)}
                 </span>
                 <Badge
                   variant={lowStock ? "destructive" : "secondary"}
-                  className="text-[10px] px-1.5 py-0"
+                  className="text-xs px-2 py-0.5 font-bold"
                 >
                   {p.stock} {p.unidad}
                 </Badge>
