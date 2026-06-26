@@ -379,7 +379,7 @@ function TicketsPage() {
                   </span>.
                 </div>
                 <div className="text-amber-700 dark:text-amber-400 text-sm font-medium">
-                  ⚠ Esta copia es solo para reemplazo. Evita entregarla al cliente si ya recibió el original.
+                  ⚠ Esta reimpresión es solo para reemplazar un ticket extraviado. No genera una nueva venta.
                 </div>
               </div>
             </AlertDialogDescription>
