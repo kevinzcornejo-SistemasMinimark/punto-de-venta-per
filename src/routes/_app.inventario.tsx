@@ -17,7 +17,7 @@ export const Route = createFileRoute("/_app/inventario")({
 function InventarioPage() {
   const { productos, loading } = useCatalog();
   const [q, setQ] = useState("");
-  const [solo, setSolo] = useState<"todos" | "bajo" | "agotado">("todos");
+  const [solo, setSolo] = useState<"todos" | "bajo" | "agotado" | "reponer">("todos");
 
   const filtered = useMemo(() => {
     let list = productos;
