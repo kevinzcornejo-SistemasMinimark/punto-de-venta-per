@@ -363,19 +363,32 @@ drop trigger if exists tr_venta_item_stock on public.venta_items;
 create trigger tr_venta_item_stock after insert on public.venta_items
 for each row execute function public.trg_venta_item_stock();
 
+
+-- Refuerzo: garantizar columnas críticas en productos antes de crear vistas
+alter table public.productos add column if not exists stock numeric(12,3) default 0;
+alter table public.productos add column if not exists stock_minimo numeric(12,3) default 5;
+alter table public.productos add column if not exists activo boolean default true;
+alter table public.productos add column if not exists categoria_id uuid;
+update public.productos set stock = 0 where stock is null;
+update public.productos set stock_minimo = 5 where stock_minimo is null;
+update public.productos set activo = true where activo is null;
+
 -- =========================== VISTAS ÚTILES ============================
+drop view if exists public.v_stock_bajo cascade;
 create or replace view public.v_stock_bajo as
   select p.*, coalesce(c.nombre,'Sin categoría') as categoria
   from public.productos p
   left join public.categorias c on c.id = p.categoria_id
   where p.activo and p.stock <= p.stock_minimo;
 
+drop view if exists public.v_ventas_dia cascade;
 create or replace view public.v_ventas_dia as
   select date(creada_en) as dia, count(*) as transacciones,
          sum(total) as total_ventas, sum(igv) as total_igv
   from public.ventas where estado <> 'ANULADA'
   group by date(creada_en) order by dia desc;
 
+drop view if exists public.v_top_productos cascade;
 create or replace view public.v_top_productos as
   select vi.producto_id, vi.nombre,
          sum(vi.cantidad) as unidades, sum(vi.total) as monto
