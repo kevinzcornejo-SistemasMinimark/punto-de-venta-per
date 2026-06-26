@@ -19,6 +19,10 @@ import {
   Apple,
   ShoppingBasket,
   Layers,
+  Monitor,
+  Mic,
+  MicOff,
+  Keyboard,
   type LucideIcon,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -45,6 +49,7 @@ import { formatPEN } from "@/lib/format";
 import { useCatalog } from "@/hooks/useCatalog";
 import { useAuth } from "@/contexts/AuthContext";
 import { registrarVenta } from "@/lib/ventas";
+import { broadcastCart, broadcastPagado, openCustomerDisplay } from "@/lib/customerDisplay";
 
 export const Route = createFileRoute("/_app/pos")({
   head: () => ({ meta: [{ title: "Punto de Venta — POS Minimarket" }] }),
@@ -60,7 +65,15 @@ function POSPage() {
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [ticket, setTicket] = useState<TicketData | null>(null);
   const [kiosko, setKiosko] = useState(true);
+  const [escuchando, setEscuchando] = useState(false);
+  const [ayudaOpen, setAyudaOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
+  const recRef = useRef<any>(null);
+
+  // Pantalla cliente: emitir cambios del carrito
+  useEffect(() => {
+    broadcastCart(cart.items, cart.totales);
+  }, [cart.items, cart.totales]);
 
   // Modo Kiosco: oculta sidebar/header y entra a pantalla completa
   useEffect(() => {
@@ -94,11 +107,60 @@ function POSPage() {
       } else if (e.key === "F2") {
         e.preventDefault();
         if (cart.items.length > 0) setCheckoutOpen(true);
+      } else if (e.key === "F3") {
+        e.preventDefault();
+        toggleVoz();
+      } else if (e.key === "F4") {
+        e.preventDefault();
+        openCustomerDisplay();
+      } else if (e.key === "F8") {
+        e.preventDefault();
+        cart.clear();
+      } else if (e.key === "F9") {
+        e.preventDefault();
+        setAyudaOpen((o) => !o);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cart.items.length]);
+
+  // Reconocimiento de voz (Web Speech API)
+  const toggleVoz = () => {
+    const SR: any = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) { toast.error("Tu navegador no soporta reconocimiento de voz"); return; }
+    if (recRef.current) {
+      try { recRef.current.stop(); } catch {}
+      recRef.current = null;
+      setEscuchando(false);
+      return;
+    }
+    const rec = new SR();
+    rec.lang = "es-PE"; rec.continuous = true; rec.interimResults = false;
+    rec.onresult = (e: any) => {
+      const txt = e.results[e.results.length - 1][0].transcript.toLowerCase().trim();
+      const num = txt.match(/(\d+)/)?.[1];
+      if (txt.includes("cobrar") || txt.includes("pagar")) {
+        if (cart.items.length) setCheckoutOpen(true);
+      } else if (txt.includes("limpiar") || txt.includes("borrar todo")) {
+        cart.clear(); toast.info("Carrito limpiado");
+      } else if (num) {
+        const p = allProductos.find((x) => x.codigo_barras === num);
+        if (p) { cart.add(p); toast.success(`+ ${p.nombre}`); }
+        else toast.error(`Sin producto con código ${num}`);
+      } else {
+        const p = allProductos.find((x) => x.nombre.toLowerCase().includes(txt));
+        if (p) { cart.add(p); toast.success(`+ ${p.nombre}`); }
+      }
+    };
+    rec.onerror = () => { setEscuchando(false); recRef.current = null; };
+    rec.onend = () => { setEscuchando(false); recRef.current = null; };
+    rec.start();
+    recRef.current = rec;
+    setEscuchando(true);
+    toast.success("Escuchando… di 'cobrar', 'limpiar' o el nombre del producto");
+  };
 
   // Lector código de barras: input rápido seguido de Enter
   useEffect(() => {
@@ -190,6 +252,8 @@ function POSPage() {
       });
       setCheckoutOpen(false);
       setTicket({ ...baseTicket, correlativo: venta.correlativo });
+      const recibido = data.pagos.reduce((s, p) => s + (p.monto || 0), 0);
+      broadcastPagado(cart.totales.total, Math.max(0, recibido - cart.totales.total));
       cart.clear();
       refresh();
       toast.success(
@@ -214,6 +278,32 @@ function POSPage() {
               <Pause className="h-4 w-4 mr-2" />
               Pausar Ticket
             </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                className="h-11 px-3 border-2 font-bold rounded-xl"
+                onClick={() => setAyudaOpen(true)}
+                title="Atajos (F9)"
+              >
+                <Keyboard className="h-4 w-4 mr-2" />Atajos
+              </Button>
+              <Button
+                variant="outline"
+                className={`h-11 px-3 border-2 font-bold rounded-xl ${escuchando ? "bg-red-500 text-white border-red-500 animate-pulse hover:bg-red-600" : ""}`}
+                onClick={toggleVoz}
+                title="Voz (F3)"
+              >
+                {escuchando ? <MicOff className="h-4 w-4 mr-2" /> : <Mic className="h-4 w-4 mr-2" />}
+                {escuchando ? "Escuchando" : "Voz"}
+              </Button>
+              <Button
+                variant="outline"
+                className="h-11 px-3 border-2 font-bold rounded-xl"
+                onClick={openCustomerDisplay}
+                title="Pantalla cliente (F4)"
+              >
+                <Monitor className="h-4 w-4 mr-2" />Pantalla cliente
+              </Button>
             <Button
               variant="outline"
               className="h-11 px-4 border-2 font-bold rounded-xl"
@@ -231,6 +321,7 @@ function POSPage() {
                 </>
               )}
             </Button>
+            </div>
           </div>
 
           {/* Barcode bar */}
@@ -328,6 +419,44 @@ function POSPage() {
         onOpenChange={(o) => !o && setTicket(null)}
         ticket={ticket}
       />
+
+      {/* Modal de atajos */}
+      {ayudaOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={() => setAyudaOpen(false)}>
+          <div className="bg-card rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-2">
+              <Keyboard className="h-6 w-6 text-primary" />
+              <h2 className="text-xl font-extrabold">Atajos de teclado</h2>
+            </div>
+            <div className="space-y-2 text-sm">
+              {[
+                ["F1", "Enfocar barra de búsqueda / código"],
+                ["F2", "Abrir cobro / Cobrar"],
+                ["F3", "Activar / desactivar voz"],
+                ["F4", "Abrir pantalla del cliente"],
+                ["F8", "Limpiar carrito"],
+                ["F9", "Mostrar esta ayuda"],
+                ["Enter", "Confirmar código de barras escaneado"],
+              ].map(([k, d]) => (
+                <div key={k} className="flex items-center justify-between border-b last:border-0 py-2">
+                  <span>{d}</span>
+                  <kbd className="px-2.5 py-1 text-xs font-mono font-bold bg-muted rounded border">{k}</kbd>
+                </div>
+              ))}
+            </div>
+            <div className="pt-2 border-t">
+              <div className="text-xs font-bold text-muted-foreground uppercase mb-2">Comandos de voz</div>
+              <div className="text-sm space-y-1">
+                <div>· "<span className="font-semibold">cobrar</span>" / "pagar" → abre cobro</div>
+                <div>· "<span className="font-semibold">limpiar</span>" → vacía el carrito</div>
+                <div>· Di un <span className="font-semibold">número</span> → busca por código</div>
+                <div>· Di el <span className="font-semibold">nombre</span> → agrega el producto</div>
+              </div>
+            </div>
+            <Button onClick={() => setAyudaOpen(false)} className="w-full h-11 font-bold">Cerrar</Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
