@@ -19,6 +19,17 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { formatPEN } from "@/lib/format";
 import { TicketModal, type TicketData } from "@/components/pos/TicketModal";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { AlertTriangle } from "lucide-react";
 
 export const Route = createFileRoute("/_app/tickets")({
   head: () => ({ meta: [{ title: "Tickets — POS Minimarket" }] }),
@@ -70,6 +81,7 @@ function TicketsPage() {
   const [reprintOpen, setReprintOpen] = useState(false);
   const [reprintData, setReprintData] = useState<TicketData | null>(null);
   const [reprintingId, setReprintingId] = useState<string | null>(null);
+  const [confirmVenta, setConfirmVenta] = useState<Venta | null>(null);
 
   const cargar = async () => {
     if (isDemo || !user) { setRows([]); setLoading(false); return; }
@@ -331,7 +343,7 @@ function TicketsPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => reimprimir(v)}
+                    onClick={() => setConfirmVenta(v)}
                     disabled={reprintingId === v.id}
                     className="h-8 font-semibold"
                   >
@@ -346,6 +358,47 @@ function TicketsPage() {
       </Card>
 
       <TicketModal open={reprintOpen} onOpenChange={setReprintOpen} ticket={reprintData} />
+
+      <AlertDialog open={!!confirmVenta} onOpenChange={(o) => !o && setConfirmVenta(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              ¿Reimprimir ticket?
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 pt-1">
+                <div>
+                  Estás a punto de reimprimir el comprobante{" "}
+                  <span className="font-mono font-bold text-foreground">
+                    {confirmVenta?.serie}-{String(confirmVenta?.correlativo ?? "").padStart(8, "0")}
+                  </span>{" "}
+                  por{" "}
+                  <span className="font-bold text-foreground">
+                    {confirmVenta ? formatPEN(confirmVenta.total) : ""}
+                  </span>.
+                </div>
+                <div className="text-amber-700 dark:text-amber-400 text-sm font-medium">
+                  ⚠ Esta copia es solo para reemplazo. Evita entregarla al cliente si ya recibió el original.
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="h-11 font-semibold">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="h-11 font-bold bg-emerald-500 hover:bg-emerald-600 text-white"
+              onClick={() => {
+                const v = confirmVenta;
+                setConfirmVenta(null);
+                if (v) reimprimir(v);
+              }}
+            >
+              <Printer className="h-4 w-4 mr-2" /> Sí, reimprimir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
