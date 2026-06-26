@@ -292,6 +292,29 @@ create table if not exists public.log_auditoria (
 
 -- =========================== COMPATIBILIDAD (tablas antiguas) =========
 -- Agrega columnas faltantes en instalaciones previas sin romper datos.
+alter table public.roles_usuario add column if not exists rol text default 'cajero';
+alter table public.roles_usuario add column if not exists nombre text;
+alter table public.roles_usuario add column if not exists activo boolean default true;
+alter table public.roles_usuario add column if not exists creado_en timestamptz default now();
+
+alter table public.tiendas       add column if not exists nombre text;
+alter table public.tiendas       add column if not exists direccion text;
+alter table public.tiendas       add column if not exists ruc text;
+alter table public.tiendas       add column if not exists telefono text;
+alter table public.tiendas       add column if not exists email text;
+alter table public.tiendas       add column if not exists logo_url text;
+alter table public.tiendas       add column if not exists moneda text default 'PEN';
+alter table public.tiendas       add column if not exists igv numeric(5,2) default 18.00;
+alter table public.tiendas       add column if not exists activa boolean default true;
+alter table public.tiendas       add column if not exists creada_en timestamptz default now();
+
+alter table public.terminales    add column if not exists tienda_id uuid;
+alter table public.terminales    add column if not exists nombre text;
+alter table public.terminales    add column if not exists serie_boleta text default 'B001';
+alter table public.terminales    add column if not exists serie_factura text default 'F001';
+alter table public.terminales    add column if not exists serie_ticket text default 'T001';
+alter table public.terminales    add column if not exists activa boolean default true;
+
 alter table public.clientes     add column if not exists tipo_doc text default 'DNI';
 alter table public.clientes     add column if not exists documento text;
 alter table public.clientes     add column if not exists email text;
@@ -336,6 +359,11 @@ alter table public.ventas       add column if not exists descuento numeric(12,2)
 alter table public.ventas       add column if not exists metodo_pago text default 'EFECTIVO';
 alter table public.ventas       add column if not exists estado text default 'EMITIDA';
 alter table public.ventas       add column if not exists observacion text;
+
+update public.tiendas set nombre = 'Mi Minimarket' where nombre is null;
+update public.tiendas set moneda = 'PEN' where moneda is null;
+update public.tiendas set igv = 18.00 where igv is null;
+update public.tiendas set activa = true where activa is null;
 
 
 -- =========================== TRIGGERS =================================
@@ -442,8 +470,8 @@ end $$;
 
 -- =========================== DATOS DEMO ===============================
 insert into public.tiendas(nombre, direccion, ruc, telefono)
-values ('Mi Minimarket', 'Av. Principal 123', '20123456789', '+51 999 999 999')
-on conflict do nothing;
+select 'Mi Minimarket', 'Av. Principal 123', '20123456789', '+51 999 999 999'
+where not exists (select 1 from public.tiendas);
 
 insert into public.categorias(nombre, icono, color, orden) values
   ('Abarrotes','ShoppingBasket','#10b981',1),
