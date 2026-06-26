@@ -343,12 +343,12 @@ function TicketsPage() {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => setConfirmVenta(v)}
+                    onClick={() => reimprimir(v)}
                     disabled={reprintingId === v.id}
                     className="h-8 font-semibold"
                   >
                     <Printer className="h-3.5 w-3.5 mr-1.5 text-emerald-600" />
-                    {reprintingId === v.id ? "Cargando…" : "Reimprimir"}
+                    {reprintingId === v.id ? "Cargando…" : "Vista previa"}
                   </Button>
                 </td>
               </tr>
