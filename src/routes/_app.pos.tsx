@@ -59,7 +59,7 @@ function POSPage() {
   const [cat, setCat] = useState<string | null>(null);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [ticket, setTicket] = useState<TicketData | null>(null);
-  const [kiosko, setKiosko] = useState(false);
+  const [kiosko, setKiosko] = useState(true);
   const searchRef = useRef<HTMLInputElement>(null);
 
   // Modo Kiosco: oculta sidebar/header y entra a pantalla completa
