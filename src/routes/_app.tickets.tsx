@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { formatPEN } from "@/lib/format";
+import { TicketModal, type TicketData } from "@/components/pos/TicketModal";
 
 export const Route = createFileRoute("/_app/tickets")({
   head: () => ({ meta: [{ title: "Tickets — POS Minimarket" }] }),
@@ -66,6 +67,9 @@ function TicketsPage() {
   const [tipo, setTipo] = useState<string>("TODOS");
   const [metodo, setMetodo] = useState<string>("TODOS");
   const [estado, setEstado] = useState<string>("TODOS");
+  const [reprintOpen, setReprintOpen] = useState(false);
+  const [reprintData, setReprintData] = useState<TicketData | null>(null);
+  const [reprintingId, setReprintingId] = useState<string | null>(null);
 
   const cargar = async () => {
     if (isDemo || !user) { setRows([]); setLoading(false); return; }
@@ -162,6 +166,53 @@ function TicketsPage() {
   const limpiarFiltros = () => {
     setQ(""); setTipo("TODOS"); setMetodo("TODOS"); setEstado("TODOS");
     setPreset("hoy"); setDesde(""); setHasta("");
+  };
+
+  const reimprimir = async (v: Venta) => {
+    try {
+      setReprintingId(v.id);
+      const { data: det, error } = await supabase
+        .from("detalle_ventas")
+        .select("cantidad,precio_unitario,descuento,total,producto_id,productos(id,nombre,precio_venta,igv)")
+        .eq("venta_id", v.id);
+      if (error) throw error;
+      const items = (det ?? []).map((d: any) => ({
+        producto: {
+          id: d.productos?.id ?? d.producto_id,
+          nombre: d.productos?.nombre ?? "Producto",
+          precio_venta: Number(d.precio_unitario),
+          igv: d.productos?.igv ?? true,
+        } as any,
+        cantidad: Number(d.cantidad),
+        descuento: Number(d.descuento ?? 0),
+      }));
+      const total = Number(v.total);
+      const igv = items.reduce((s, i: any) => {
+        const linea = i.producto.precio_venta * i.cantidad - i.descuento;
+        return s + (i.producto.igv ? linea - linea / 1.18 : 0);
+      }, 0);
+      const subtotal = total - igv;
+      const tipo = (v.tipo_comprobante === "FACTURA" || v.tipo_comprobante === "BOLETA")
+        ? v.tipo_comprobante
+        : "TICKET";
+      setReprintData({
+        tipo: tipo as TicketData["tipo"],
+        serie: v.serie,
+        correlativo: v.correlativo,
+        fecha: new Date(v.creada_en),
+        items: items as any,
+        subtotal,
+        igv,
+        total,
+        metodoPago: v.metodo_pago,
+        cliente: v.clientes?.razon_social ?? v.clientes?.nombres ?? undefined,
+      });
+      setReprintOpen(true);
+    } catch (e: any) {
+      toast.error(e.message ?? "No se pudo cargar el ticket");
+    } finally {
+      setReprintingId(null);
+    }
   };
 
   return (
@@ -262,11 +313,11 @@ function TicketsPage() {
       <Card className="overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-left text-xs uppercase">
-            <tr><th className="px-4 py-2">Comprobante</th><th className="px-4 py-2">Tipo</th><th className="px-4 py-2">Cliente</th><th className="px-4 py-2">Método</th><th className="px-4 py-2">Estado</th><th className="px-4 py-2">Fecha</th><th className="px-4 py-2 text-right">Total</th></tr>
+            <tr><th className="px-4 py-2">Comprobante</th><th className="px-4 py-2">Tipo</th><th className="px-4 py-2">Cliente</th><th className="px-4 py-2">Método</th><th className="px-4 py-2">Estado</th><th className="px-4 py-2">Fecha</th><th className="px-4 py-2 text-right">Total</th><th className="px-4 py-2 text-center">Acciones</th></tr>
           </thead>
           <tbody>
-            {loading ? <tr><td colSpan={7} className="p-6 text-center text-muted-foreground">Cargando…</td></tr>
-            : filtered.length === 0 ? <tr><td colSpan={7} className="p-6 text-center text-muted-foreground">Sin ventas</td></tr>
+            {loading ? <tr><td colSpan={8} className="p-6 text-center text-muted-foreground">Cargando…</td></tr>
+            : filtered.length === 0 ? <tr><td colSpan={8} className="p-6 text-center text-muted-foreground">Sin ventas</td></tr>
             : filtered.map((v) => (
               <tr key={v.id} className="border-t">
                 <td className="px-4 py-2 font-mono text-xs">{v.serie}-{String(v.correlativo).padStart(8, "0")}</td>
@@ -276,11 +327,25 @@ function TicketsPage() {
                 <td className="px-4 py-2"><Badge variant={v.estado === "PAGADA" ? "default" : v.estado === "ANULADA" ? "destructive" : "secondary"}>{v.estado}</Badge></td>
                 <td className="px-4 py-2 text-xs">{new Date(v.creada_en).toLocaleString("es-PE")}</td>
                 <td className="px-4 py-2 text-right font-bold">{formatPEN(v.total)}</td>
+                <td className="px-4 py-2 text-center">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => reimprimir(v)}
+                    disabled={reprintingId === v.id}
+                    className="h-8 font-semibold"
+                  >
+                    <Printer className="h-3.5 w-3.5 mr-1.5 text-emerald-600" />
+                    {reprintingId === v.id ? "Cargando…" : "Reimprimir"}
+                  </Button>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </Card>
+
+      <TicketModal open={reprintOpen} onOpenChange={setReprintOpen} ticket={reprintData} />
     </div>
   );
 }
