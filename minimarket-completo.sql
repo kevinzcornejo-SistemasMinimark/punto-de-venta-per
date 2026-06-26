@@ -289,6 +289,55 @@ create table if not exists public.log_auditoria (
   creado_en timestamptz default now()
 );
 
+
+-- =========================== COMPATIBILIDAD (tablas antiguas) =========
+-- Agrega columnas faltantes en instalaciones previas sin romper datos.
+alter table public.clientes     add column if not exists tipo_doc text default 'DNI';
+alter table public.clientes     add column if not exists documento text;
+alter table public.clientes     add column if not exists email text;
+alter table public.clientes     add column if not exists telefono text;
+alter table public.clientes     add column if not exists direccion text;
+alter table public.clientes     add column if not exists puntos int default 0;
+alter table public.clientes     add column if not exists activo boolean default true;
+alter table public.clientes     add column if not exists creado_en timestamptz default now();
+
+alter table public.productos    add column if not exists codigo_barras text;
+alter table public.productos    add column if not exists descripcion text;
+alter table public.productos    add column if not exists categoria_id uuid;
+alter table public.productos    add column if not exists proveedor_id uuid;
+alter table public.productos    add column if not exists unidad text default 'unidad';
+alter table public.productos    add column if not exists precio_compra numeric(12,2) default 0;
+alter table public.productos    add column if not exists precio_venta numeric(12,2) default 0;
+alter table public.productos    add column if not exists stock numeric(12,3) default 0;
+alter table public.productos    add column if not exists stock_minimo numeric(12,3) default 5;
+alter table public.productos    add column if not exists afecto_igv boolean default true;
+alter table public.productos    add column if not exists imagen_url text;
+alter table public.productos    add column if not exists activo boolean default true;
+alter table public.productos    add column if not exists creado_en timestamptz default now();
+alter table public.productos    add column if not exists actualizado_en timestamptz default now();
+
+alter table public.categorias   add column if not exists icono text;
+alter table public.categorias   add column if not exists color text;
+alter table public.categorias   add column if not exists orden int default 0;
+alter table public.categorias   add column if not exists activa boolean default true;
+alter table public.categorias   add column if not exists creada_en timestamptz default now();
+
+alter table public.proveedores  add column if not exists ruc text;
+alter table public.proveedores  add column if not exists contacto text;
+alter table public.proveedores  add column if not exists telefono text;
+alter table public.proveedores  add column if not exists email text;
+alter table public.proveedores  add column if not exists direccion text;
+alter table public.proveedores  add column if not exists activo boolean default true;
+alter table public.proveedores  add column if not exists creado_en timestamptz default now();
+
+alter table public.ventas       add column if not exists tienda_id uuid;
+alter table public.ventas       add column if not exists terminal_id uuid;
+alter table public.ventas       add column if not exists descuento numeric(12,2) default 0;
+alter table public.ventas       add column if not exists metodo_pago text default 'EFECTIVO';
+alter table public.ventas       add column if not exists estado text default 'EMITIDA';
+alter table public.ventas       add column if not exists observacion text;
+
+
 -- =========================== TRIGGERS =================================
 create or replace function public.trg_actualizado_en() returns trigger
 language plpgsql as $$
