@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Printer, X } from "lucide-react";
+import { Printer, X, Eye } from "lucide-react";
 import { formatPEN } from "@/lib/format";
 import { mockBusiness } from "@/data/mockData";
 import type { CartItem } from "@/hooks/usePOSCart";
@@ -67,10 +67,13 @@ export function TicketModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md p-0 gap-0 overflow-hidden">
-        <DialogHeader className="px-5 py-4 border-b">
+        <DialogHeader className="px-5 py-4 border-b bg-gradient-to-r from-emerald-50 to-white dark:from-emerald-950/30">
           <DialogTitle className="flex items-center gap-2 text-lg">
-            <Printer className="h-5 w-5 text-primary" /> Ticket Generado
+            <Eye className="h-5 w-5 text-emerald-600" /> Vista previa del ticket
           </DialogTitle>
+          <p className="text-xs text-muted-foreground font-medium">
+            Revisa el contenido antes de enviarlo a la impresora
+          </p>
         </DialogHeader>
 
         <div className="max-h-[60vh] overflow-y-auto p-5 bg-muted/40">
@@ -147,7 +150,7 @@ export function TicketModal({
             onClick={() => { handlePrint(); onOpenChange(false); }}
             className="h-14 px-6 text-base font-extrabold flex-1 bg-emerald-500 hover:bg-emerald-600 text-white"
           >
-            <Printer className="h-5 w-5 mr-2" /> Imprimir 2 copias
+            <Printer className="h-5 w-5 mr-2" /> Imprimir ahora
           </Button>
         </DialogFooter>
       </DialogContent>
