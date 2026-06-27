@@ -151,11 +151,14 @@ function TicketsPage() {
   const cargar = async () => {
     if (isDemo || !user) { setRows([]); setLoading(false); return; }
     setLoading(true);
-    const { data, error } = await supabase
+    let qy = supabase
       .from("ventas")
       .select("id,correlativo,serie,tipo_comprobante,total,metodo_pago,estado,creada_en,cajero_id,clientes(razon_social,nombres)")
       .order("creada_en", { ascending: false })
-      .limit(500);
+      .limit(5000);
+    if (from) qy = qy.gte("creada_en", from.toISOString());
+    if (to) qy = qy.lte("creada_en", to.toISOString());
+    const { data, error } = await qy;
     if (error) toast.error(error.message);
     const ventas = (data ?? []) as any[];
     setRows(ventas as any);
@@ -177,7 +180,7 @@ function TicketsPage() {
   useEffect(() => {
     cargar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, isDemo]);
+  }, [user?.id, isDemo, preset, desde, hasta]);
 
   // Calcular rango según preset
   const { from, to } = useMemo(() => {
