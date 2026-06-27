@@ -119,6 +119,7 @@ function TicketsPage() {
   const [confirmVenta, setConfirmVenta] = useState<Venta | null>(null);
   const [cajerosMap, setCajerosMap] = useState<Record<string, string>>({});
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [previewHtml, setPreviewHtml] = useState<string | null>(null);
 
   // Imprime HTML usando un iframe oculto (evita bloqueadores de popups)
   const printViaIframe = (html: string) => {
@@ -353,7 +354,7 @@ function TicketsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [preset, from, to]);
 
-  const imprimirReporte = () => {
+  const construirReporteHtml = (): string | null => {
     if (filtered.length === 0) { toast.error("No hay tickets para el reporte"); return; }
 
     // Desglose por método de pago
@@ -435,6 +436,17 @@ function TicketsPage() {
   <div class="center small">Generado: ${new Date().toLocaleString("es-PE")}</div>
   <script>window.onload=()=>{window.print();setTimeout(()=>window.close(),400);}</script>
 </body></html>`;
+    return html;
+  };
+
+  const previsualizarReporte = () => {
+    const html = construirReporteHtml();
+    if (html) setPreviewHtml(html);
+  };
+
+  const imprimirReporte = () => {
+    const html = construirReporteHtml();
+    if (!html) return;
     printViaIframe(html);
     toast.success(`Reporte 80mm listo (${filtered.length} tickets)`);
   };
