@@ -317,6 +317,46 @@ function TicketsPage() {
       margin: { left: 10, right: 10 },
     });
 
+    // Cuadro: DETALLE POR MÉTODO DE PAGO
+    const porMetodo = new Map<string, { count: number; total: number }>();
+    for (const v of filtered) {
+      const k = v.metodo_pago || "—";
+      const cur = porMetodo.get(k) ?? { count: 0, total: 0 };
+      cur.count += 1;
+      cur.total += Number(v.total || 0);
+      porMetodo.set(k, cur);
+    }
+    const desglose = Array.from(porMetodo.entries()).sort((a, b) => b[1].total - a[1].total);
+    const desgloseBody = desglose.map(([m, d]) => {
+      const pct = totalPeriodo > 0 ? (d.total / totalPeriodo) * 100 : 0;
+      return [
+        METODO_LABEL[m] ?? m,
+        String(d.count),
+        `S/ ${d.total.toFixed(2)}`,
+        `${pct.toFixed(1)}%`,
+      ];
+    });
+
+    const afterY = (doc as any).lastAutoTable?.finalY ?? 28;
+    autoTable(doc, {
+      startY: afterY + 8,
+      head: [["DETALLE POR MÉTODO DE PAGO", "Tickets", "Monto", "%"]],
+      body: desgloseBody,
+      foot: [["TOTAL", String(filtered.length), `S/ ${totalPeriodo.toFixed(2)}`, "100.0%"]],
+      styles: { fontSize: 10, cellPadding: 3 },
+      headStyles: { fillColor: [55, 65, 81], textColor: 255, fontStyle: "bold" },
+      footStyles: { fillColor: [16, 185, 129], textColor: 255, fontStyle: "bold" },
+      columnStyles: {
+        0: { fontStyle: "bold" },
+        1: { halign: "center" },
+        2: { halign: "right", fontStyle: "bold" },
+        3: { halign: "right" },
+      },
+      alternateRowStyles: { fillColor: [243, 244, 246] },
+      margin: { left: 10, right: 10 },
+      tableWidth: 130,
+    });
+
     const pageCount = doc.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
