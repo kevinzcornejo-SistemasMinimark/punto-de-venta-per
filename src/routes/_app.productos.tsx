@@ -23,6 +23,9 @@ import {
 import { Plus, Pencil, Trash2, Package, Search } from "lucide-react";
 import { toast } from "sonner";
 import { formatPEN } from "@/lib/format";
+import { fileToThumbDataUrl } from "@/lib/imageResize";
+import { Upload, X as XIcon } from "lucide-react";
+import { useRef } from "react";
 
 export const Route = createFileRoute("/_app/productos")({
   head: () => ({ meta: [{ title: "Productos — POS Minimarket" }] }),
@@ -41,6 +44,7 @@ type Producto = {
   categoria_id: string | null;
   afecto_igv: boolean;
   activo: boolean;
+  imagen_url?: string | null;
 };
 type Categoria = { id: string; nombre: string };
 
@@ -77,7 +81,7 @@ function ProductosPage() {
       supabase
         .from("productos")
         .select(
-          "id,codigo_barras,nombre,precio_venta,precio_compra,stock_actual,stock_minimo,unidad_medida,categoria_id,afecto_igv,activo",
+          "id,codigo_barras,nombre,precio_venta,precio_compra,stock_actual,stock_minimo,unidad_medida,categoria_id,afecto_igv,activo,imagen_url",
         )
         .order("nombre"),
       supabase.from("categorias").select("id,nombre").order("nombre"),
@@ -119,6 +123,7 @@ function ProductosPage() {
       categoria_id: p.categoria_id || null,
       afecto_igv: p.afecto_igv ?? true,
       activo: p.activo ?? true,
+      imagen_url: p.imagen_url ?? null,
     };
     const { error } = editing?.id
       ? await supabase.from("productos").update(payload).eq("id", editing.id)
@@ -180,6 +185,7 @@ function ProductosPage() {
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-left text-xs uppercase">
             <tr>
+              <th className="px-4 py-2 w-14"></th>
               <th className="px-4 py-2">Producto</th>
               <th className="px-4 py-2">Código</th>
               <th className="px-4 py-2 text-right">P. Compra</th>
@@ -191,19 +197,32 @@ function ProductosPage() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6} className="p-6 text-center text-muted-foreground">
+                <td colSpan={7} className="p-6 text-center text-muted-foreground">
                   Cargando…
                 </td>
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan={6} className="p-6 text-center text-muted-foreground">
+                <td colSpan={7} className="p-6 text-center text-muted-foreground">
                   Sin productos
                 </td>
               </tr>
             ) : (
               filtered.map((p) => (
                 <tr key={p.id} className="border-t">
+                  <td className="px-4 py-2">
+                    {p.imagen_url ? (
+                      <img
+                        src={p.imagen_url}
+                        alt={p.nombre}
+                        className="h-10 w-10 rounded-md object-cover border"
+                      />
+                    ) : (
+                      <div className="h-10 w-10 rounded-md bg-muted grid place-items-center text-[10px] font-bold text-muted-foreground">
+                        {p.nombre.slice(0, 2).toUpperCase()}
+                      </div>
+                    )}
+                  </td>
                   <td className="px-4 py-2 font-medium">{p.nombre}</td>
                   <td className="px-4 py-2 font-mono text-xs">
                     {p.codigo_barras ?? "—"}
@@ -271,6 +290,8 @@ function ProductoModal({
   onSave: (p: Partial<Producto>) => void;
 }) {
   const [f, setF] = useState<Partial<Producto>>({});
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [procesando, setProcesando] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -292,6 +313,22 @@ function ProductoModal({
 
   const set = (patch: Partial<Producto>) => setF((p) => ({ ...p, ...patch }));
 
+  const onPickFile = async (file: File | null) => {
+    if (!file) return;
+    try {
+      setProcesando(true);
+      const url = await fileToThumbDataUrl(file, 128, 0.78);
+      const kb = Math.round((url.length * 0.75) / 1024);
+      set({ imagen_url: url });
+      toast.success(`Imagen optimizada a 128×128 (~${kb} KB)`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "No se pudo procesar la imagen");
+    } finally {
+      setProcesando(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl">
@@ -299,6 +336,54 @@ function ProductoModal({
           <DialogTitle>{initial ? "Editar" : "Nuevo"} producto</DialogTitle>
         </DialogHeader>
         <div className="grid grid-cols-2 gap-3">
+          <div className="col-span-2 flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
+            <div className="h-20 w-20 rounded-lg border bg-card overflow-hidden grid place-items-center shrink-0">
+              {f.imagen_url ? (
+                <img
+                  src={f.imagen_url}
+                  alt="Vista previa"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="text-xs text-muted-foreground">Sin foto</span>
+              )}
+            </div>
+            <div className="flex-1 space-y-1">
+              <div className="text-sm font-semibold">Foto del producto</div>
+              <p className="text-xs text-muted-foreground">
+                Se convierte automáticamente a icono 128×128 (≈ 5 KB) para no pesar en la base de datos.
+              </p>
+              <div className="flex gap-2 pt-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={procesando}
+                  onClick={() => fileRef.current?.click()}
+                >
+                  <Upload className="h-4 w-4 mr-1" />
+                  {procesando ? "Procesando…" : f.imagen_url ? "Cambiar" : "Subir foto"}
+                </Button>
+                {f.imagen_url && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => set({ imagen_url: null })}
+                  >
+                    <XIcon className="h-4 w-4 mr-1" /> Quitar
+                  </Button>
+                )}
+              </div>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => onPickFile(e.target.files?.[0] ?? null)}
+              />
+            </div>
+          </div>
           <div className="col-span-2">
             <Label>Nombre</Label>
             <Input

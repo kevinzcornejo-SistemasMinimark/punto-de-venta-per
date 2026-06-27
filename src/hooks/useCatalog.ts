@@ -20,6 +20,7 @@ function mapProducto(p: any): MockProducto {
     unidad: String(p.unidad_medida ?? "UNIDAD").slice(0, 3),
     categoria_id: p.categoria_id ?? "",
     igv: !!p.afecto_igv,
+    imagen: p.imagen_url ?? undefined,
   };
 }
 
