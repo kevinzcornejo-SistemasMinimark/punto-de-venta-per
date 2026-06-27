@@ -701,6 +701,37 @@ function TicketsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!previewHtml} onOpenChange={(o) => !o && setPreviewHtml(null)}>
+        <DialogContent className="max-w-md p-0">
+          <DialogHeader className="px-4 pt-4">
+            <DialogTitle>Vista previa — Reporte 80mm</DialogTitle>
+          </DialogHeader>
+          <div className="bg-muted/40 px-4 py-3 max-h-[65vh] overflow-auto flex justify-center">
+            <iframe
+              title="Vista previa reporte"
+              srcDoc={(previewHtml ?? "").replace(/<script[\s\S]*?<\/script>/g, "")}
+              style={{ width: "302px", minHeight: "60vh", background: "white", border: "1px solid hsl(var(--border))" }}
+            />
+          </div>
+          <DialogFooter className="px-4 pb-4 gap-2">
+            <Button variant="outline" onClick={() => setPreviewHtml(null)}>Cerrar</Button>
+            <Button
+              className="bg-purple-600 hover:bg-purple-700 text-white"
+              onClick={() => {
+                const html = previewHtml;
+                setPreviewHtml(null);
+                if (html) {
+                  printViaIframe(html);
+                  toast.success(`Reporte 80mm enviado a imprimir (${filtered.length} tickets)`);
+                }
+              }}
+            >
+              <Printer className="h-4 w-4 mr-2" /> Imprimir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
