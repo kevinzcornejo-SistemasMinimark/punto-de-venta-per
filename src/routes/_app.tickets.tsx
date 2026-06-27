@@ -286,7 +286,7 @@ function TicketsPage() {
   @media print { .noprint{ display:none; } }
 </style></head><body>
   <h1>Reporte de Tickets</h1>
-  <div class="meta">Período: <b>${presetLabel[preset] ?? "Personalizado"}</b> &nbsp;|&nbsp; Total: <b>S/ ${totalPeriodo.toFixed(2)}</b> &nbsp;|&nbsp; ${filtered.length} ticket${filtered.length !== 1 ? "s" : ""}</div>
+  <div class="meta">Período: <b>${periodoTexto}</b> &nbsp;|&nbsp; Total: <b>S/ ${totalPeriodo.toFixed(2)}</b> &nbsp;|&nbsp; ${filtered.length} ticket${filtered.length !== 1 ? "s" : ""} &nbsp;|&nbsp; Orden: <b>${sortDir === "asc" ? "Fecha ↑" : "Fecha ↓"}</b></div>
   <table>
     <thead>
       <tr>
@@ -378,7 +378,7 @@ function TicketsPage() {
 
     const sep = "-".repeat(48);
     const titulo = `REPORTE DE TICKETS`;
-    const subt = presetLabel[preset] ?? "";
+    const subt = periodoTexto;
 
     const html = `<!doctype html><html><head><meta charset="utf-8"><title>Reporte de tickets</title>
 <style>
