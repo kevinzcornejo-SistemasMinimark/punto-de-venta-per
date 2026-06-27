@@ -74,6 +74,7 @@ type Venta = {
   metodo_pago: string;
   estado: string;
   creada_en: string;
+  cajero_id: string | null;
   clientes: { razon_social: string | null; nombres: string | null } | null;
 };
 
@@ -111,17 +112,31 @@ function TicketsPage() {
   const [reprintData, setReprintData] = useState<TicketData | null>(null);
   const [reprintingId, setReprintingId] = useState<string | null>(null);
   const [confirmVenta, setConfirmVenta] = useState<Venta | null>(null);
+  const [cajerosMap, setCajerosMap] = useState<Record<string, string>>({});
 
   const cargar = async () => {
     if (isDemo || !user) { setRows([]); setLoading(false); return; }
     setLoading(true);
     const { data, error } = await supabase
       .from("ventas")
-      .select("id,correlativo,serie,tipo_comprobante,total,metodo_pago,estado,creada_en,clientes(razon_social,nombres)")
+      .select("id,correlativo,serie,tipo_comprobante,total,metodo_pago,estado,creada_en,cajero_id,clientes(razon_social,nombres)")
       .order("creada_en", { ascending: false })
       .limit(500);
     if (error) toast.error(error.message);
-    setRows((data ?? []) as any);
+    const ventas = (data ?? []) as any[];
+    setRows(ventas as any);
+    // Resolver nombres de cajeros desde perfiles
+    const ids = Array.from(new Set(ventas.map((v) => v.cajero_id).filter(Boolean))) as string[];
+    if (ids.length) {
+      const { data: per } = await supabase.from("perfiles").select("id,nombre,correo").in("id", ids);
+      const map: Record<string, string> = {};
+      (per ?? []).forEach((p: any) => {
+        map[p.id] = p.nombre || (p.correo ? String(p.correo).split("@")[0] : p.id.slice(0, 8));
+      });
+      setCajerosMap(map);
+    } else {
+      setCajerosMap({});
+    }
     setLoading(false);
   };
 
@@ -215,10 +230,10 @@ function TicketsPage() {
 
   const exportarPDF = () => {
     if (filtered.length === 0) { toast.error("No hay tickets para exportar"); return; }
-    const usuarioLabel = (() => {
+    const meLabel = (() => {
       const e = user?.email ?? "";
-      const base = e.split("@")[0] || "Vendedor";
-      return base.charAt(0).toUpperCase() + base.slice(1);
+      const b = e.split("@")[0] || "Vendedor";
+      return b.charAt(0).toUpperCase() + b.slice(1);
     })();
     const filas = filtered.map((v, i) => {
       const f = new Date(v.creada_en);
@@ -228,11 +243,13 @@ function TicketsPage() {
       const ampm = hh >= 12 ? "p. m." : "a. m.";
       const h12 = ((hh + 11) % 12) + 1;
       const hora = `${String(h12).padStart(2, "0")}:${mm} ${ampm}`;
-      const ticket = `T-${v.correlativo}`;
+      const ticket = `${v.serie}-${v.correlativo}`;
       const cliente = v.clientes?.razon_social ?? v.clientes?.nombres ?? "-";
-      const tipoLabel = v.tipo_comprobante === "TICKET" ? "Local" : (v.tipo_comprobante || "-");
-      const metodo = (METODO_LABEL[v.metodo_pago] ?? v.metodo_pago ?? "").toLowerCase();
-      const metodoCap = metodo.charAt(0).toUpperCase() + metodo.slice(1);
+      const tipoLabel = v.tipo_comprobante || "-";
+      const metodoCap = METODO_LABEL[v.metodo_pago] ?? v.metodo_pago ?? "-";
+      const usuarioLabel = v.cajero_id
+        ? (cajerosMap[v.cajero_id] ?? v.cajero_id.slice(0, 8))
+        : meLabel;
       const bg = i % 2 === 0 ? "#ffffff" : "#f3f4f6";
       return `<tr style="background:${bg}">
         <td>${ticket}</td>
@@ -241,7 +258,7 @@ function TicketsPage() {
         <td>${cliente}</td>
         <td>${tipoLabel}</td>
         <td>${metodoCap}</td>
-        <td>S/ ${Number(v.total).toFixed(2)}</td>
+        <td>${formatPEN(v.total)}</td>
         <td>${usuarioLabel}</td>
       </tr>`;
     }).join("");
