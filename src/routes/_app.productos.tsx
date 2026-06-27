@@ -290,6 +290,8 @@ function ProductoModal({
   onSave: (p: Partial<Producto>) => void;
 }) {
   const [f, setF] = useState<Partial<Producto>>({});
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [procesando, setProcesando] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -311,6 +313,22 @@ function ProductoModal({
 
   const set = (patch: Partial<Producto>) => setF((p) => ({ ...p, ...patch }));
 
+  const onPickFile = async (file: File | null) => {
+    if (!file) return;
+    try {
+      setProcesando(true);
+      const url = await fileToThumbDataUrl(file, 128, 0.78);
+      const kb = Math.round((url.length * 0.75) / 1024);
+      set({ imagen_url: url });
+      toast.success(`Imagen optimizada a 128×128 (~${kb} KB)`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "No se pudo procesar la imagen");
+    } finally {
+      setProcesando(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl">
@@ -318,6 +336,54 @@ function ProductoModal({
           <DialogTitle>{initial ? "Editar" : "Nuevo"} producto</DialogTitle>
         </DialogHeader>
         <div className="grid grid-cols-2 gap-3">
+          <div className="col-span-2 flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
+            <div className="h-20 w-20 rounded-lg border bg-card overflow-hidden grid place-items-center shrink-0">
+              {f.imagen_url ? (
+                <img
+                  src={f.imagen_url}
+                  alt="Vista previa"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="text-xs text-muted-foreground">Sin foto</span>
+              )}
+            </div>
+            <div className="flex-1 space-y-1">
+              <div className="text-sm font-semibold">Foto del producto</div>
+              <p className="text-xs text-muted-foreground">
+                Se convierte automáticamente a icono 128×128 (≈ 5 KB) para no pesar en la base de datos.
+              </p>
+              <div className="flex gap-2 pt-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={procesando}
+                  onClick={() => fileRef.current?.click()}
+                >
+                  <Upload className="h-4 w-4 mr-1" />
+                  {procesando ? "Procesando…" : f.imagen_url ? "Cambiar" : "Subir foto"}
+                </Button>
+                {f.imagen_url && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => set({ imagen_url: null })}
+                  >
+                    <XIcon className="h-4 w-4 mr-1" /> Quitar
+                  </Button>
+                )}
+              </div>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => onPickFile(e.target.files?.[0] ?? null)}
+              />
+            </div>
+          </div>
           <div className="col-span-2">
             <Label>Nombre</Label>
             <Input
