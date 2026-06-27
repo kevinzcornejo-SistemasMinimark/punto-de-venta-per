@@ -206,7 +206,12 @@ function POSPage() {
   }, [query, cat, allProductos]);
 
   const handlePick = (p: MockProducto) => {
-    cart.add(p);
+    if ((p.stock ?? 0) <= 0) {
+      toast.error(`${p.nombre} sin stock`);
+      return;
+    }
+    const ok = cart.add(p);
+    if (!ok) toast.warning(`Stock máximo alcanzado: ${p.stock} ${p.unidad}`);
   };
 
   const confirmarVenta = async (data: {
@@ -399,7 +404,9 @@ function POSPage() {
         items={cart.items}
         onInc={(id) => {
           const it = cart.items.find((i) => i.producto.id === id);
-          if (it) cart.setCantidad(id, it.cantidad + 1);
+          if (!it) return;
+          const ok = cart.setCantidad(id, it.cantidad + 1);
+          if (!ok) toast.warning(`Stock máximo: ${it.producto.stock} ${it.producto.unidad}`);
         }}
         onDec={(id) => {
           const it = cart.items.find((i) => i.producto.id === id);
