@@ -21,6 +21,8 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, X, Check } from "lucide-react";
 import { formatPEN } from "@/lib/format";
 import { toast } from "sonner";
+import yapeLogo from "@/assets/yape.png.asset.json";
+import plinLogo from "@/assets/plin.png.asset.json";
 
 // Logos de marca como SVG inline (sin dependencias externas)
 const EfectivoLogo = ({ active }: { active: boolean }) => (
@@ -34,15 +36,15 @@ const EfectivoLogo = ({ active }: { active: boolean }) => (
 );
 
 const YapeLogo = ({ active }: { active: boolean }) => (
-  <div className={`px-3 py-1.5 rounded-md font-black text-lg tracking-tight ${
-    active ? "bg-white text-[#6B2BD9]" : "bg-[#6B2BD9] text-white"
-  }`}>yape</div>
+  <div className={`rounded-lg overflow-hidden flex items-center justify-center ${active ? "bg-white p-0.5" : ""}`}>
+    <img src={yapeLogo.url} alt="Yape" className="h-11 w-11 object-contain" />
+  </div>
 );
 
 const PlinLogo = ({ active }: { active: boolean }) => (
-  <div className={`px-3 py-1.5 rounded-md font-black text-lg tracking-tight italic ${
-    active ? "bg-white text-[#00B2A9]" : "bg-[#00B2A9] text-white"
-  }`}>plin</div>
+  <div className={`rounded-lg overflow-hidden flex items-center justify-center ${active ? "bg-white p-0.5" : ""}`}>
+    <img src={plinLogo.url} alt="Plin" className="h-11 w-11 object-contain" />
+  </div>
 );
 
 const VisaMcLogo = ({ active }: { active: boolean }) => (
