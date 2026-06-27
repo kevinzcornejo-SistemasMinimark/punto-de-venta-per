@@ -31,6 +31,34 @@ import {
 } from "@/components/ui/alert-dialog";
 import { AlertTriangle } from "lucide-react";
 
+const METODO_STYLES: Record<string, string> = {
+  EFECTIVO: "bg-emerald-100 text-emerald-700 border-emerald-300",
+  YAPE: "bg-purple-100 text-purple-700 border-purple-300",
+  PLIN: "bg-cyan-100 text-cyan-700 border-cyan-300",
+  TARJETA_DEBITO: "bg-blue-100 text-blue-700 border-blue-300",
+  TARJETA_CREDITO: "bg-orange-100 text-orange-700 border-orange-300",
+  TARJETA: "bg-blue-100 text-blue-700 border-blue-300",
+  TRANSFERENCIA: "bg-slate-200 text-slate-800 border-slate-300",
+};
+const METODO_LABEL: Record<string, string> = {
+  EFECTIVO: "Efectivo",
+  YAPE: "Yape",
+  PLIN: "Plin",
+  TARJETA_DEBITO: "T. Débito",
+  TARJETA_CREDITO: "T. Crédito",
+  TARJETA: "Tarjeta",
+  TRANSFERENCIA: "Transfer.",
+};
+function MetodoPill({ metodo }: { metodo: string }) {
+  const cls = METODO_STYLES[metodo] ?? "bg-muted text-foreground border-border";
+  const label = METODO_LABEL[metodo] ?? metodo;
+  return (
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border ${cls}`}>
+      {label}
+    </span>
+  );
+}
+
 export const Route = createFileRoute("/_app/tickets")({
   head: () => ({ meta: [{ title: "Tickets — POS Minimarket" }] }),
   component: TicketsPage,
@@ -335,7 +363,7 @@ function TicketsPage() {
                 <td className="px-4 py-2 font-mono text-xs">{v.serie}-{String(v.correlativo).padStart(8, "0")}</td>
                 <td className="px-4 py-2"><Badge variant="secondary">{v.tipo_comprobante}</Badge></td>
                 <td className="px-4 py-2">{v.clientes?.razon_social ?? v.clientes?.nombres ?? "—"}</td>
-                <td className="px-4 py-2 text-xs">{v.metodo_pago}</td>
+                <td className="px-4 py-2"><MetodoPill metodo={v.metodo_pago} /></td>
                 <td className="px-4 py-2"><Badge variant={v.estado === "PAGADA" ? "default" : v.estado === "ANULADA" ? "destructive" : "secondary"}>{v.estado}</Badge></td>
                 <td className="px-4 py-2 text-xs">{new Date(v.creada_en).toLocaleString("es-PE")}</td>
                 <td className="px-4 py-2 text-right font-bold">{formatPEN(v.total)}</td>
