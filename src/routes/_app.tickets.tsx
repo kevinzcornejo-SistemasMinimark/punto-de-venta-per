@@ -74,6 +74,7 @@ type Venta = {
   metodo_pago: string;
   estado: string;
   creada_en: string;
+  cajero_id: string | null;
   clientes: { razon_social: string | null; nombres: string | null } | null;
 };
 
@@ -111,17 +112,31 @@ function TicketsPage() {
   const [reprintData, setReprintData] = useState<TicketData | null>(null);
   const [reprintingId, setReprintingId] = useState<string | null>(null);
   const [confirmVenta, setConfirmVenta] = useState<Venta | null>(null);
+  const [cajerosMap, setCajerosMap] = useState<Record<string, string>>({});
 
   const cargar = async () => {
     if (isDemo || !user) { setRows([]); setLoading(false); return; }
     setLoading(true);
     const { data, error } = await supabase
       .from("ventas")
-      .select("id,correlativo,serie,tipo_comprobante,total,metodo_pago,estado,creada_en,clientes(razon_social,nombres)")
+      .select("id,correlativo,serie,tipo_comprobante,total,metodo_pago,estado,creada_en,cajero_id,clientes(razon_social,nombres)")
       .order("creada_en", { ascending: false })
       .limit(500);
     if (error) toast.error(error.message);
-    setRows((data ?? []) as any);
+    const ventas = (data ?? []) as any[];
+    setRows(ventas as any);
+    // Resolver nombres de cajeros desde perfiles
+    const ids = Array.from(new Set(ventas.map((v) => v.cajero_id).filter(Boolean))) as string[];
+    if (ids.length) {
+      const { data: per } = await supabase.from("perfiles").select("id,nombre,correo").in("id", ids);
+      const map: Record<string, string> = {};
+      (per ?? []).forEach((p: any) => {
+        map[p.id] = p.nombre || (p.correo ? String(p.correo).split("@")[0] : p.id.slice(0, 8));
+      });
+      setCajerosMap(map);
+    } else {
+      setCajerosMap({});
+    }
     setLoading(false);
   };
 
