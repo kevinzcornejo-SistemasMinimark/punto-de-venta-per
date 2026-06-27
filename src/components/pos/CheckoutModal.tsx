@@ -92,11 +92,13 @@ export function CheckoutModal({
     tipo_comprobante: "BOLETA" | "FACTURA" | "TICKET";
     serie: string;
     documento_cliente?: string;
+    nombre_cliente?: string;
     pagos: Pago[];
   }) => void;
 }) {
   const [tipo, setTipo] = useState<"BOLETA" | "FACTURA" | "TICKET">("TICKET");
   const [doc, setDoc] = useState("");
+  const [nombre, setNombre] = useState("");
   const [pagos, setPagos] = useState<Pago[]>([
     { metodo: "EFECTIVO", monto: total },
   ]);
@@ -106,6 +108,7 @@ export function CheckoutModal({
     if (open) {
       setPagos([{ metodo: "EFECTIVO", monto: total }]);
       setDoc("");
+      setNombre("");
       setTipo("TICKET");
     }
   }, [open, total]);
@@ -148,6 +151,7 @@ export function CheckoutModal({
       tipo_comprobante: tipo,
       serie,
       documento_cliente: doc || undefined,
+      nombre_cliente: nombre.trim() || undefined,
       pagos,
     });
   };
@@ -231,6 +235,27 @@ export function CheckoutModal({
                     }
                     maxLength={tipo === "FACTURA" ? 11 : 12}
                     className="h-12 text-lg font-mono"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-semibold">
+                    Nombre del cliente
+                    {tipo === "TICKET" && (
+                      <span className="ml-2 text-xs font-normal text-muted-foreground">
+                        (opcional)
+                      </span>
+                    )}
+                  </Label>
+                  <Input
+                    value={nombre}
+                    onChange={(e) => setNombre(e.target.value)}
+                    placeholder={
+                      tipo === "FACTURA"
+                        ? "Razón social"
+                        : "Nombres y apellidos"
+                    }
+                    maxLength={120}
+                    className="h-12 text-lg"
                   />
                 </div>
               </TabsContent>
