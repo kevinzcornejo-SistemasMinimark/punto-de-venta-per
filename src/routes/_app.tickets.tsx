@@ -13,6 +13,8 @@ import {
   FileSpreadsheet,
   FileText,
   RefreshCw,
+  ArrowUpAZ,
+  ArrowDownAZ,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -113,6 +115,7 @@ function TicketsPage() {
   const [reprintingId, setReprintingId] = useState<string | null>(null);
   const [confirmVenta, setConfirmVenta] = useState<Venta | null>(null);
   const [cajerosMap, setCajerosMap] = useState<Record<string, string>>({});
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   const cargar = async () => {
     if (isDemo || !user) { setRows([]); setLoading(false); return; }
@@ -169,7 +172,7 @@ function TicketsPage() {
 
   const filtered = useMemo(() => {
     const k = q.trim().toLowerCase();
-    return rows.filter((r) => {
+    const out = rows.filter((r) => {
       const d = new Date(r.creada_en);
       if (from && d < from) return false;
       if (to && d > to) return false;
@@ -182,7 +185,13 @@ function TicketsPage() {
       }
       return true;
     });
-  }, [rows, q, from, to, tipo, metodo, estado]);
+    out.sort((a, b) => {
+      const ta = new Date(a.creada_en).getTime();
+      const tb = new Date(b.creada_en).getTime();
+      return sortDir === "asc" ? ta - tb : tb - ta;
+    });
+    return out;
+  }, [rows, q, from, to, tipo, metodo, estado, sortDir]);
 
   const totalPeriodo = useMemo(
     () => filtered.reduce((s, r) => s + Number(r.total || 0), 0),
@@ -306,6 +315,17 @@ function TicketsPage() {
   const presetLabel: Record<RangoPreset, string> = {
     hoy: "Hoy", ayer: "Ayer", semana: "Última Semana", mes: "Último Mes", rango: "Rango personalizado",
   };
+
+  const periodoTexto = useMemo(() => {
+    const base = presetLabel[preset] ?? "Personalizado";
+    if (from && to) {
+      const f = from.toLocaleDateString("es-PE");
+      const t = to.toLocaleDateString("es-PE");
+      return preset === "rango" ? `Del ${f} al ${t}` : `${base} (${f} – ${t})`;
+    }
+    return base;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preset, from, to]);
 
   const imprimirReporte = () => {
     if (filtered.length === 0) { toast.error("No hay tickets para el reporte"); return; }
