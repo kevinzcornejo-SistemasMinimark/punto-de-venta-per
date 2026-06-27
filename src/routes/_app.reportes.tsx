@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BarChart3, TrendingUp, FileSpreadsheet, Printer, Calendar } from "lucide-react";
+import { BarChart3, TrendingUp, FileSpreadsheet, Printer, Calendar, Package, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatPEN } from "@/lib/format";
@@ -18,28 +18,85 @@ export const Route = createFileRoute("/_app/reportes")({
 });
 
 type Venta = { creada_en: string; total: number; metodo_pago: string; tipo_comprobante: string };
+type TopProd = { nombre: string; cantidad: number; total: number };
 const COLORS = ["#10b981", "#0ea5e9", "#f59e0b", "#8b5cf6", "#ef4444", "#ec4899"];
 
 function ReportesPage() {
   const { user, isDemo } = useAuth();
   const [ventas, setVentas] = useState<Venta[]>([]);
   const [gastosTotal, setGastosTotal] = useState(0);
+  const [topProductos, setTopProductos] = useState<TopProd[]>([]);
+  const [porHora, setPorHora] = useState<{ hora: string; ventas: number }[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [rango, setRango] = useState<7 | 15 | 30 | 90>(30);
 
-  useEffect(() => {
+  const cargar = async () => {
     if (isDemo || !user) return;
-    (async () => {
+    setLoading(true); setErrorMsg(null);
+    try {
       const desde = new Date(); desde.setDate(desde.getDate() - rango);
-      const { data } = await supabase.from("ventas")
-        .select("creada_en,total,metodo_pago,tipo_comprobante")
-        .gte("creada_en", desde.toISOString())
+      const desdeIso = desde.toISOString();
+
+      const { data: v, error: vErr } = await supabase.from("ventas")
+        .select("id,creada_en,total,metodo_pago,tipo_comprobante")
+        .gte("creada_en", desdeIso)
         .neq("estado", "ANULADA");
-      setVentas((data ?? []) as any);
-      const { data: g } = await supabase.from("gastos")
-        .select("monto").gte("fecha", desde.toISOString().slice(0, 10));
-      setGastosTotal((g ?? []).reduce((s: number, r: any) => s + Number(r.monto), 0));
-    })();
-  }, [user?.id, isDemo, rango]);
+      if (vErr) throw vErr;
+      setVentas((v ?? []) as any);
+
+      // Agrupar por hora del día
+      const hh: Record<string, number> = {};
+      (v ?? []).forEach((row: any) => {
+        const h = new Date(row.creada_en).getHours().toString().padStart(2, "0");
+        hh[h] = (hh[h] ?? 0) + Number(row.total);
+      });
+      setPorHora(
+        Array.from({ length: 24 }, (_, i) => {
+          const k = i.toString().padStart(2, "0");
+          return { hora: `${k}h`, ventas: Number((hh[k] ?? 0).toFixed(2)) };
+        }),
+      );
+
+      // Top productos
+      const ids = (v ?? []).map((x: any) => x.id);
+      if (ids.length) {
+        const { data: det, error: dErr } = await supabase
+          .from("detalle_ventas")
+          .select("cantidad,total,productos(nombre)")
+          .in("venta_id", ids);
+        if (dErr) throw dErr;
+        const acc: Record<string, TopProd> = {};
+        (det ?? []).forEach((r: any) => {
+          const n = r.productos?.nombre ?? "—";
+          if (!acc[n]) acc[n] = { nombre: n, cantidad: 0, total: 0 };
+          acc[n].cantidad += Number(r.cantidad);
+          acc[n].total += Number(r.total);
+        });
+        setTopProductos(
+          Object.values(acc).sort((a, b) => b.total - a.total).slice(0, 10),
+        );
+      } else {
+        setTopProductos([]);
+      }
+
+      // Gastos: opcional; ignorar si tabla no existe
+      try {
+        const { data: g, error: gErr } = await supabase.from("gastos")
+          .select("monto").gte("fecha", desde.toISOString().slice(0, 10));
+        if (gErr) throw gErr;
+        setGastosTotal((g ?? []).reduce((s: number, r: any) => s + Number(r.monto), 0));
+      } catch {
+        setGastosTotal(0);
+      }
+    } catch (e: any) {
+      setErrorMsg(e?.message ?? "Error cargando reportes");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { cargar(); /* eslint-disable-next-line */ }, [user?.id, isDemo, rango]);
 
   const stats = useMemo(() => {
     const total = ventas.reduce((s, v) => s + Number(v.total), 0);
@@ -108,6 +165,9 @@ function ReportesPage() {
               </button>
             ))}
           </div>
+          <Button variant="outline" onClick={cargar} className="font-semibold" disabled={loading}>
+            <RefreshCw className={`h-4 w-4 mr-2 text-blue-600 ${loading ? "animate-spin" : ""}`} />Actualizar
+          </Button>
           <Button variant="outline" onClick={exportarCSV} className="font-semibold">
             <FileSpreadsheet className="h-4 w-4 mr-2 text-emerald-600" />Excel
           </Button>
@@ -116,6 +176,12 @@ function ReportesPage() {
           </Button>
         </div>
       </div>
+
+      {errorMsg && (
+        <Card className="p-3 border-red-300 bg-red-50 text-red-700 text-sm font-medium">
+          {errorMsg}
+        </Card>
+      )}
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <Card className="p-4"><div className="text-[11px] text-muted-foreground uppercase font-semibold">Ventas</div><div className="text-2xl font-extrabold text-primary mt-1">{formatPEN(stats.total)}</div></Card>
@@ -180,6 +246,45 @@ function ReportesPage() {
               </ResponsiveContainer>
             </div>
           )}
+        </Card>
+      </div>
+
+      <div className="grid lg:grid-cols-[1fr_1fr] gap-4">
+        <Card className="p-5">
+          <div className="font-bold mb-3 flex items-center gap-2"><Package className="h-4 w-4 text-primary" /> Top 10 productos</div>
+          {topProductos.length === 0 ? (
+            <div className="h-56 flex items-center justify-center text-muted-foreground text-sm">Sin datos</div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead className="text-left text-xs uppercase text-muted-foreground">
+                <tr><th className="py-1">Producto</th><th className="py-1 text-right">Unid.</th><th className="py-1 text-right">Total</th></tr>
+              </thead>
+              <tbody>
+                {topProductos.map((p) => (
+                  <tr key={p.nombre} className="border-t">
+                    <td className="py-2">{p.nombre}</td>
+                    <td className="py-2 text-right font-semibold">{p.cantidad}</td>
+                    <td className="py-2 text-right font-bold text-emerald-600">{formatPEN(p.total)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </Card>
+
+        <Card className="p-5">
+          <div className="font-bold mb-3">Ventas por hora del día</div>
+          <div className="h-64">
+            <ResponsiveContainer>
+              <BarChart data={porHora}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="hora" tick={{ fontSize: 10 }} />
+                <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `S/${v}`} />
+                <Tooltip formatter={(v: number) => formatPEN(v)} />
+                <Bar dataKey="ventas" fill="#8b5cf6" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </Card>
       </div>
     </div>
