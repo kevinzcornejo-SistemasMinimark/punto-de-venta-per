@@ -210,20 +210,29 @@ export function CheckoutModal({
                 <div className="text-sm text-muted-foreground">
                   Serie: <span className="font-mono font-bold text-foreground">{serie}</span>
                 </div>
-                {tipo !== "TICKET" && (
-                  <div className="space-y-1.5">
-                    <Label className="text-sm font-semibold">{tipo === "FACTURA" ? "RUC" : "DNI / RUC / CE"}</Label>
-                    <Input
-                      value={doc}
-                      onChange={(e) =>
-                        setDoc(e.target.value.replace(/\D/g, ""))
-                      }
-                      placeholder={tipo === "FACTURA" ? "20XXXXXXXXX" : "DNI 8 dígitos"}
-                      maxLength={tipo === "FACTURA" ? 11 : 12}
-                      className="h-12 text-lg font-mono"
-                    />
-                  </div>
-                )}
+                <div className="space-y-1.5">
+                  <Label className="text-sm font-semibold">
+                    {tipo === "FACTURA" ? "RUC" : "DNI / RUC / CE"}
+                    {tipo === "TICKET" && (
+                      <span className="ml-2 text-xs font-normal text-muted-foreground">
+                        (opcional · por defecto Cliente Genérico)
+                      </span>
+                    )}
+                  </Label>
+                  <Input
+                    value={doc}
+                    onChange={(e) => setDoc(e.target.value.replace(/\D/g, ""))}
+                    placeholder={
+                      tipo === "FACTURA"
+                        ? "20XXXXXXXXX"
+                        : tipo === "TICKET"
+                          ? "Cliente Genérico"
+                          : "DNI 8 dígitos"
+                    }
+                    maxLength={tipo === "FACTURA" ? 11 : 12}
+                    className="h-12 text-lg font-mono"
+                  />
+                </div>
               </TabsContent>
             </Tabs>
             </div>
