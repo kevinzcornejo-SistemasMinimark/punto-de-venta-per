@@ -22,6 +22,8 @@ import { toast } from "sonner";
 import { formatPEN } from "@/lib/format";
 import { TicketModal, type TicketData } from "@/components/pos/TicketModal";
 import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -268,68 +270,63 @@ function TicketsPage() {
 
   const exportarPDF = () => {
     if (filtered.length === 0) { toast.error("No hay tickets para exportar"); return; }
-    const filas = filtered.map((v, i) => {
+    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(20);
+    doc.text("Reporte de Tickets", 14, 16);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(80, 80, 80);
+    doc.text(
+      `Periodo: ${periodoTexto}   |   Total: S/ ${totalPeriodo.toFixed(2)}   |   ${filtered.length} ticket(s)   |   Orden: ${sortDir === "asc" ? "Fecha ascendente" : "Fecha descendente"}`,
+      14, 23,
+    );
+    doc.setTextColor(0, 0, 0);
+
+    const body = filtered.map((v) => {
       const f = new Date(v.creada_en);
-      const fecha = `${f.getDate()}/${f.getMonth() + 1}/${f.getFullYear()}`;
-      const hh = f.getHours();
-      const mm = String(f.getMinutes()).padStart(2, "0");
-      const ampm = hh >= 12 ? "p. m." : "a. m.";
-      const h12 = ((hh + 11) % 12) + 1;
-      const hora = `${String(h12).padStart(2, "0")}:${mm} ${ampm}`;
-      const ticket = `${v.serie}-${v.correlativo}`;
-      const cliente = v.clientes?.razon_social ?? v.clientes?.nombres ?? "-";
-      const tipoLabel = v.tipo_comprobante || "-";
-      const metodoCap = METODO_LABEL[v.metodo_pago] ?? v.metodo_pago ?? "-";
-      const usuarioLabel = v.cajero_id
-        ? (cajerosMap[v.cajero_id] ?? v.cajero_id.slice(0, 8))
-        : "—";
-      const bg = i % 2 === 0 ? "#ffffff" : "#f3f4f6";
-      return `<tr style="background:${bg}">
-        <td>${ticket}</td>
-        <td>${fecha}</td>
-        <td>${hora}</td>
-        <td>${cliente}</td>
-        <td>${tipoLabel}</td>
-        <td>${metodoCap}</td>
-        <td>${formatPEN(v.total)}</td>
-        <td>${usuarioLabel}</td>
-      </tr>`;
-    }).join("");
-    const html = `<!doctype html><html><head><meta charset="utf-8"><title>Reporte de Tickets</title>
-<style>
-  @page { size: A4; margin: 18mm 14mm; }
-  body { font-family: Arial, Helvetica, sans-serif; color:#111827; margin:0; }
-  h1 { font-size: 28px; font-weight: 800; margin: 0 0 6px; }
-  .meta { color:#374151; font-size: 13px; margin-bottom: 18px; }
-  .meta b { color:#111827; }
-  table { width:100%; border-collapse: collapse; font-size: 12px; }
-  thead th {
-    background:#ea5b1f; color:#fff; text-align:left; font-weight:700;
-    padding:10px 12px; border:1px solid #d14a14; font-size:12px;
-  }
-  tbody td {
-    padding:10px 12px; border:1px solid #e5e7eb; vertical-align: top;
-  }
-  .footer { margin-top: 14px; text-align:right; font-size:12px; color:#374151; }
-  .footer b { color:#111827; font-size:14px; }
-  @media print { .noprint{ display:none; } }
-</style></head><body>
-  <h1>Reporte de Tickets</h1>
-  <div class="meta">Período: <b>${periodoTexto}</b> &nbsp;|&nbsp; Total: <b>S/ ${totalPeriodo.toFixed(2)}</b> &nbsp;|&nbsp; ${filtered.length} ticket${filtered.length !== 1 ? "s" : ""} &nbsp;|&nbsp; Orden: <b>${sortDir === "asc" ? "Fecha ↑" : "Fecha ↓"}</b></div>
-  <table>
-    <thead>
-      <tr>
-        <th>Ticket</th><th>Fecha</th><th>Hora</th><th>Cliente</th>
-        <th>Tipo</th><th>Método Pago</th><th>Total</th><th>Usuario</th>
-      </tr>
-    </thead>
-    <tbody>${filas}</tbody>
-  </table>
-  <div class="footer">Generado: ${new Date().toLocaleString("es-PE")}</div>
-  <script>window.onload=()=>{setTimeout(()=>window.print(),250);}</script>
-</body></html>`;
-    printViaIframe(html);
-    toast.success("Abriendo diálogo de impresión — elige 'Guardar como PDF'");
+      const fecha = f.toLocaleDateString("es-PE");
+      const hora = f.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit", hour12: true });
+      const ticket = `${v.serie}-${String(v.correlativo).padStart(8, "0")}`;
+      const cliente = v.clientes?.razon_social ?? v.clientes?.nombres ?? "—";
+      const usuario = v.cajero_id ? (cajerosMap[v.cajero_id] ?? v.cajero_id.slice(0, 8)) : "—";
+      return [
+        ticket, fecha, hora, cliente,
+        v.tipo_comprobante || "—",
+        METODO_LABEL[v.metodo_pago] ?? v.metodo_pago ?? "—",
+        `S/ ${Number(v.total).toFixed(2)}`,
+        usuario,
+      ];
+    });
+
+    autoTable(doc, {
+      startY: 28,
+      head: [["Ticket", "Fecha", "Hora", "Cliente", "Tipo", "Método Pago", "Total", "Usuario"]],
+      body,
+      styles: { fontSize: 9, cellPadding: 2.5 },
+      headStyles: { fillColor: [234, 91, 31], textColor: 255, fontStyle: "bold" },
+      alternateRowStyles: { fillColor: [243, 244, 246] },
+      columnStyles: { 6: { halign: "right", fontStyle: "bold" } },
+      foot: [["", "", "", "", "", "TOTAL", `S/ ${totalPeriodo.toFixed(2)}`, ""]],
+      footStyles: { fillColor: [16, 185, 129], textColor: 255, fontStyle: "bold", halign: "right" },
+      margin: { left: 10, right: 10 },
+    });
+
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(120);
+      doc.text(
+        `Generado: ${new Date().toLocaleString("es-PE")}   —   Página ${i} de ${pageCount}`,
+        doc.internal.pageSize.getWidth() - 14, doc.internal.pageSize.getHeight() - 6,
+        { align: "right" },
+      );
+    }
+
+    const fname = `tickets-${toInputDate(new Date())}.pdf`;
+    doc.save(fname);
+    toast.success(`PDF descargado: ${fname}`);
   };
 
   const imprimirUltimo = () => {
