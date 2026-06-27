@@ -240,6 +240,100 @@ function TicketsPage() {
     reimprimir(filtered[0]);
   };
 
+  const presetLabel: Record<RangoPreset, string> = {
+    hoy: "Hoy", ayer: "Ayer", semana: "Última Semana", mes: "Último Mes", rango: "Rango personalizado",
+  };
+
+  const imprimirReporte = () => {
+    if (filtered.length === 0) { toast.error("No hay tickets para el reporte"); return; }
+
+    // Desglose por método de pago
+    const porMetodo = new Map<string, { count: number; total: number }>();
+    for (const v of filtered) {
+      const k = v.metodo_pago || "—";
+      const cur = porMetodo.get(k) ?? { count: 0, total: 0 };
+      cur.count += 1;
+      cur.total += Number(v.total || 0);
+      porMetodo.set(k, cur);
+    }
+    const desglose = Array.from(porMetodo.entries())
+      .sort((a, b) => b[1].total - a[1].total);
+
+    const fmt = (n: number) => `S/${n.toFixed(2)}`;
+    const pad = (s: string, n: number) => (s.length >= n ? s.slice(0, n) : s + " ".repeat(n - s.length));
+    const padR = (s: string, n: number) => (s.length >= n ? s.slice(-n) : " ".repeat(n - s.length) + s);
+
+    const filas = filtered.map((v) => {
+      const fecha = new Date(v.creada_en);
+      const dd = String(fecha.getDate());
+      const mm = String(fecha.getMonth() + 1);
+      const yy = fecha.getFullYear();
+      const hh = String(fecha.getHours()).padStart(2, "0");
+      const mi = String(fecha.getMinutes()).padStart(2, "0");
+      const ampm = fecha.getHours() >= 12 ? "p. m." : "a. m.";
+      const ticket = `${v.serie}-${v.correlativo}`;
+      const cliente = (v.clientes?.razon_social ?? v.clientes?.nombres ?? "Local").slice(0, 8);
+      const tipo = (v.tipo_comprobante || "").toLowerCase();
+      const pago = (METODO_LABEL[v.metodo_pago] ?? v.metodo_pago ?? "").toLowerCase();
+      return (
+        pad(ticket, 7) +
+        pad(`${dd}/${mm}/${yy}`, 9) +
+        pad(`${hh}:${mi} ${ampm}`, 11) +
+        pad(cliente, 9) +
+        pad(tipo, 7) +
+        pad(pago, 8) +
+        padR(fmt(Number(v.total)), 8)
+      );
+    }).join("\n");
+
+    const totalDesglose = desglose.map(([m, d]) => {
+      const label = `${(METODO_LABEL[m] ?? m).toLowerCase()} (${d.count})`;
+      const pct = totalPeriodo > 0 ? (d.total / totalPeriodo) * 100 : 0;
+      const right = `${fmt(d.total)} (${pct.toFixed(1)}%)`;
+      return pad(label, 30) + padR(right, 18);
+    }).join("\n");
+
+    const sep = "-".repeat(48);
+    const titulo = `REPORTE DE TICKETS`;
+    const subt = presetLabel[preset] ?? "";
+
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>Reporte de tickets</title>
+<style>
+  @page { size: 80mm auto; margin: 3mm; }
+  body { font-family: 'Courier New', monospace; font-size: 11px; color:#000; margin:0; }
+  .center { text-align:center; }
+  .logo { font-size: 14px; font-weight: 900; letter-spacing: 1px; }
+  pre { font-family: inherit; font-size: 11px; line-height: 1.25; margin: 0; white-space: pre; }
+  .total-box { border:1px solid #000; padding:4px 0; margin:6px 0; text-align:center; font-weight:900; }
+  .small { font-size: 10px; }
+  h3 { font-size: 11px; margin: 6px 0 3px; }
+</style></head><body>
+  <div class="center">
+    <div class="logo">TOMATE &amp; QUESO</div>
+    <div><b>${titulo}</b></div>
+    <div class="small">${subt}</div>
+  </div>
+  <pre>${sep}</pre>
+  <pre>${pad("Ticket", 7)}${pad("Fecha", 9)}${pad("Hora", 11)}${pad("Cliente", 9)}${pad("Tipo", 7)}${pad("Pago", 8)}${padR("Total", 8)}</pre>
+  <pre>${sep}</pre>
+  <pre>${filas}</pre>
+  <pre>${sep}</pre>
+  <div class="total-box">TOTAL: ${fmt(totalPeriodo)} (${filtered.length} tickets)</div>
+  <pre>${sep}</pre>
+  <h3>DETALLE POR MÉTODO DE PAGO:</h3>
+  <pre>${totalDesglose}</pre>
+  <pre>${sep}</pre>
+  <div class="center small">Generado: ${new Date().toLocaleString("es-PE")}</div>
+  <script>window.onload=()=>{window.print();setTimeout(()=>window.close(),400);}</script>
+</body></html>`;
+
+    const w = window.open("", "_blank", "width=420,height=720");
+    if (!w) { toast.error("Permite ventanas emergentes para imprimir"); return; }
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+  };
+
   const limpiarFiltros = () => {
     setQ(""); setTipo("TODOS"); setMetodo("TODOS"); setEstado("TODOS");
     setPreset("hoy"); setDesde(""); setHasta("");
@@ -304,6 +398,7 @@ function TicketsPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" className="h-10 font-semibold" onClick={imprimirUltimo}><Printer className="h-4 w-4 mr-2" /> IMP-Ticket</Button>
+          <Button variant="outline" className="h-10 font-semibold" onClick={imprimirReporte}><Printer className="h-4 w-4 mr-2 text-purple-600" /> Reporte 80mm</Button>
           <Button variant="outline" className="h-10 font-semibold" onClick={exportarExcel}><FileSpreadsheet className="h-4 w-4 mr-2 text-emerald-600" /> Excel</Button>
           <Button variant="outline" className="h-10 font-semibold" onClick={exportarPDF}><FileText className="h-4 w-4 mr-2 text-rose-600" /> PDF</Button>
           <Button variant="outline" className="h-10 font-semibold" onClick={cargar}><RefreshCw className="h-4 w-4 mr-2 text-blue-600" /> Actualizar</Button>
