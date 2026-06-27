@@ -230,11 +230,6 @@ function TicketsPage() {
 
   const exportarPDF = () => {
     if (filtered.length === 0) { toast.error("No hay tickets para exportar"); return; }
-    const meLabel = (() => {
-      const e = user?.email ?? "";
-      const b = e.split("@")[0] || "Vendedor";
-      return b.charAt(0).toUpperCase() + b.slice(1);
-    })();
     const filas = filtered.map((v, i) => {
       const f = new Date(v.creada_en);
       const fecha = `${f.getDate()}/${f.getMonth() + 1}/${f.getFullYear()}`;
@@ -249,7 +244,7 @@ function TicketsPage() {
       const metodoCap = METODO_LABEL[v.metodo_pago] ?? v.metodo_pago ?? "-";
       const usuarioLabel = v.cajero_id
         ? (cajerosMap[v.cajero_id] ?? v.cajero_id.slice(0, 8))
-        : meLabel;
+        : "—";
       const bg = i % 2 === 0 ? "#ffffff" : "#f3f4f6";
       return `<tr style="background:${bg}">
         <td>${ticket}</td>
