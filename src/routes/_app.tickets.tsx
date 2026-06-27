@@ -216,23 +216,75 @@ function TicketsPage() {
 
   const exportarPDF = () => {
     if (filtered.length === 0) { toast.error("No hay tickets para exportar"); return; }
-    const filas = filtered.map((v) => `<tr>
-      <td>${v.serie}-${String(v.correlativo).padStart(8, "0")}</td>
-      <td>${v.tipo_comprobante}</td>
-      <td>${v.clientes?.razon_social ?? v.clientes?.nombres ?? "—"}</td>
-      <td>${METODO_LABEL[v.metodo_pago] ?? v.metodo_pago}</td>
-      <td>${v.estado}</td>
-      <td>${new Date(v.creada_en).toLocaleString("es-PE")}</td>
-      <td class="right">${formatPEN(v.total)}</td>
-    </tr>`).join("");
-    printHTML("Tickets", `
-      <h1>Historial de tickets</h1>
-      <div class="meta">Generado: ${new Date().toLocaleString("es-PE")} · ${filtered.length} ticket(s)</div>
-      <table><thead><tr><th>Comprobante</th><th>Tipo</th><th>Cliente</th><th>Método</th><th>Estado</th><th>Fecha</th><th class="right">Total</th></tr></thead>
-      <tbody>${filas}</tbody>
-      <tfoot><tr><td colspan="6" class="right total">TOTAL</td><td class="right total">${formatPEN(totalPeriodo)}</td></tr></tfoot>
-      </table>
-    `);
+    const usuarioLabel = (() => {
+      const e = user?.email ?? "";
+      const base = e.split("@")[0] || "Vendedor";
+      return base.charAt(0).toUpperCase() + base.slice(1);
+    })();
+    const filas = filtered.map((v, i) => {
+      const f = new Date(v.creada_en);
+      const fecha = `${f.getDate()}/${f.getMonth() + 1}/${f.getFullYear()}`;
+      const hh = f.getHours();
+      const mm = String(f.getMinutes()).padStart(2, "0");
+      const ampm = hh >= 12 ? "p. m." : "a. m.";
+      const h12 = ((hh + 11) % 12) + 1;
+      const hora = `${String(h12).padStart(2, "0")}:${mm} ${ampm}`;
+      const ticket = `T-${v.correlativo}`;
+      const cliente = v.clientes?.razon_social ?? v.clientes?.nombres ?? "-";
+      const tipoLabel = v.tipo_comprobante === "TICKET" ? "Local" : (v.tipo_comprobante || "-");
+      const metodo = (METODO_LABEL[v.metodo_pago] ?? v.metodo_pago ?? "").toLowerCase();
+      const metodoCap = metodo.charAt(0).toUpperCase() + metodo.slice(1);
+      const bg = i % 2 === 0 ? "#ffffff" : "#f3f4f6";
+      return `<tr style="background:${bg}">
+        <td>${ticket}</td>
+        <td>${fecha}</td>
+        <td>${hora}</td>
+        <td>${cliente}</td>
+        <td>${tipoLabel}</td>
+        <td>${metodoCap}</td>
+        <td>S/ ${Number(v.total).toFixed(2)}</td>
+        <td>${usuarioLabel}</td>
+      </tr>`;
+    }).join("");
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>Reporte de Tickets</title>
+<style>
+  @page { size: A4; margin: 18mm 14mm; }
+  body { font-family: Arial, Helvetica, sans-serif; color:#111827; margin:0; }
+  h1 { font-size: 28px; font-weight: 800; margin: 0 0 6px; }
+  .meta { color:#374151; font-size: 13px; margin-bottom: 18px; }
+  .meta b { color:#111827; }
+  table { width:100%; border-collapse: collapse; font-size: 12px; }
+  thead th {
+    background:#ea5b1f; color:#fff; text-align:left; font-weight:700;
+    padding:10px 12px; border:1px solid #d14a14; font-size:12px;
+  }
+  tbody td {
+    padding:10px 12px; border:1px solid #e5e7eb; vertical-align: top;
+  }
+  .footer { margin-top: 14px; text-align:right; font-size:12px; color:#374151; }
+  .footer b { color:#111827; font-size:14px; }
+  @media print { .noprint{ display:none; } }
+</style></head><body>
+  <h1>Reporte de Tickets</h1>
+  <div class="meta">Período: <b>${presetLabel[preset] ?? "Personalizado"}</b> &nbsp;|&nbsp; Total: <b>S/ ${totalPeriodo.toFixed(2)}</b> &nbsp;|&nbsp; ${filtered.length} ticket${filtered.length !== 1 ? "s" : ""}</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Ticket</th><th>Fecha</th><th>Hora</th><th>Cliente</th>
+        <th>Tipo</th><th>Método Pago</th><th>Total</th><th>Usuario</th>
+      </tr>
+    </thead>
+    <tbody>${filas}</tbody>
+  </table>
+  <div class="footer">Generado: ${new Date().toLocaleString("es-PE")}</div>
+  <script>window.onload=()=>{setTimeout(()=>window.print(),250);}</script>
+</body></html>`;
+    const w = window.open("", "_blank", "width=1000,height=800");
+    if (!w) { toast.error("Permite ventanas emergentes para descargar el PDF"); return; }
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+    toast.success("Abriendo diálogo de impresión — elige 'Guardar como PDF'");
   };
 
   const imprimirUltimo = () => {
