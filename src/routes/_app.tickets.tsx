@@ -19,6 +19,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { formatPEN } from "@/lib/format";
 import { TicketModal, type TicketData } from "@/components/pos/TicketModal";
+import { printHTML } from "@/lib/exporters";
+import * as XLSX from "xlsx";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -183,24 +185,60 @@ function TicketsPage() {
   );
 
   const exportarCSV = () => {
-    const headers = ["Comprobante", "Tipo", "Cliente", "Metodo", "Estado", "Fecha", "Total"];
-    const lines = filtered.map((v) => [
-      `${v.serie}-${String(v.correlativo).padStart(8, "0")}`,
-      v.tipo_comprobante,
-      (v.clientes?.razon_social ?? v.clientes?.nombres ?? "").replace(/,/g, " "),
-      v.metodo_pago,
-      v.estado,
-      new Date(v.creada_en).toLocaleString("es-PE"),
-      Number(v.total).toFixed(2),
-    ].join(","));
-    const csv = [headers.join(","), ...lines].join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `tickets-${toInputDate(new Date())}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+  const exportarExcel = () => {
+    if (filtered.length === 0) { toast.error("No hay tickets para exportar"); return; }
+    const data = filtered.map((v) => ({
+      Comprobante: `${v.serie}-${String(v.correlativo).padStart(8, "0")}`,
+      Tipo: v.tipo_comprobante,
+      Cliente: v.clientes?.razon_social ?? v.clientes?.nombres ?? "",
+      Metodo: METODO_LABEL[v.metodo_pago] ?? v.metodo_pago,
+      Estado: v.estado,
+      Fecha: new Date(v.creada_en).toLocaleString("es-PE"),
+      Total: Number(v.total),
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    ws["!cols"] = [{ wch: 22 }, { wch: 10 }, { wch: 28 }, { wch: 12 }, { wch: 11 }, { wch: 22 }, { wch: 12 }];
+    // Formato moneda para Total
+    const range = XLSX.utils.decode_range(ws["!ref"]!);
+    for (let r = 1; r <= range.e.r; r++) {
+      const cell = ws[XLSX.utils.encode_cell({ r, c: 6 })];
+      if (cell) cell.z = '"S/" #,##0.00';
+    }
+    // Fila total
+    const totalRow = range.e.r + 2;
+    XLSX.utils.sheet_add_aoa(ws, [["", "", "", "", "", "TOTAL", totalPeriodo]], { origin: { r: totalRow, c: 0 } });
+    const totalCell = ws[XLSX.utils.encode_cell({ r: totalRow, c: 6 })];
+    if (totalCell) totalCell.z = '"S/" #,##0.00';
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Tickets");
+    XLSX.writeFile(wb, `tickets-${toInputDate(new Date())}.xlsx`, { bookType: "xlsx" });
+    toast.success(`${filtered.length} tickets exportados a Excel`);
+  };
+
+  const exportarPDF = () => {
+    if (filtered.length === 0) { toast.error("No hay tickets para exportar"); return; }
+    const filas = filtered.map((v) => `<tr>
+      <td>${v.serie}-${String(v.correlativo).padStart(8, "0")}</td>
+      <td>${v.tipo_comprobante}</td>
+      <td>${v.clientes?.razon_social ?? v.clientes?.nombres ?? "—"}</td>
+      <td>${METODO_LABEL[v.metodo_pago] ?? v.metodo_pago}</td>
+      <td>${v.estado}</td>
+      <td>${new Date(v.creada_en).toLocaleString("es-PE")}</td>
+      <td class="right">${formatPEN(v.total)}</td>
+    </tr>`).join("");
+    printHTML("Tickets", `
+      <h1>Historial de tickets</h1>
+      <div class="meta">Generado: ${new Date().toLocaleString("es-PE")} · ${filtered.length} ticket(s)</div>
+      <table><thead><tr><th>Comprobante</th><th>Tipo</th><th>Cliente</th><th>Método</th><th>Estado</th><th>Fecha</th><th class="right">Total</th></tr></thead>
+      <tbody>${filas}</tbody>
+      <tfoot><tr><td colspan="6" class="right total">TOTAL</td><td class="right total">${formatPEN(totalPeriodo)}</td></tr></tfoot>
+      </table>
+    `);
+  };
+
+  const imprimirUltimo = () => {
+    if (filtered.length === 0) { toast.error("No hay tickets"); return; }
+    reimprimir(filtered[0]);
   };
 
   const limpiarFiltros = () => {
@@ -266,9 +304,9 @@ function TicketsPage() {
           <p className="text-muted-foreground">Historial de ventas y reimpresión</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" className="h-10 font-semibold"><Printer className="h-4 w-4 mr-2" /> IMP-Ticket</Button>
-          <Button variant="outline" className="h-10 font-semibold" onClick={exportarCSV}><FileSpreadsheet className="h-4 w-4 mr-2 text-emerald-600" /> Excel</Button>
-          <Button variant="outline" className="h-10 font-semibold"><FileText className="h-4 w-4 mr-2 text-rose-600" /> PDF</Button>
+          <Button variant="outline" className="h-10 font-semibold" onClick={imprimirUltimo}><Printer className="h-4 w-4 mr-2" /> IMP-Ticket</Button>
+          <Button variant="outline" className="h-10 font-semibold" onClick={exportarExcel}><FileSpreadsheet className="h-4 w-4 mr-2 text-emerald-600" /> Excel</Button>
+          <Button variant="outline" className="h-10 font-semibold" onClick={exportarPDF}><FileText className="h-4 w-4 mr-2 text-rose-600" /> PDF</Button>
           <Button variant="outline" className="h-10 font-semibold" onClick={cargar}><RefreshCw className="h-4 w-4 mr-2 text-blue-600" /> Actualizar</Button>
         </div>
       </div>
