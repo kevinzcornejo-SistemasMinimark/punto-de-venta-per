@@ -184,7 +184,6 @@ function TicketsPage() {
     [rows],
   );
 
-  const exportarCSV = () => {
   const exportarExcel = () => {
     if (filtered.length === 0) { toast.error("No hay tickets para exportar"); return; }
     const data = filtered.map((v) => ({
