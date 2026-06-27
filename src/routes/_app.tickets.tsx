@@ -434,12 +434,8 @@ function TicketsPage() {
   <div class="center small">Generado: ${new Date().toLocaleString("es-PE")}</div>
   <script>window.onload=()=>{window.print();setTimeout(()=>window.close(),400);}</script>
 </body></html>`;
-
-    const w = window.open("", "_blank", "width=420,height=720");
-    if (!w) { toast.error("Permite ventanas emergentes para imprimir"); return; }
-    w.document.open();
-    w.document.write(html);
-    w.document.close();
+    printViaIframe(html);
+    toast.success(`Reporte 80mm listo (${filtered.length} tickets)`);
   };
 
   const limpiarFiltros = () => {
