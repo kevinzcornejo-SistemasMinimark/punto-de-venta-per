@@ -21,11 +21,6 @@ export function ProductGrid({
       {productos.map((p) => {
         const agotado = p.stock <= 0;
         const bajo = !agotado && p.stock <= p.stock_minimo;
-        const dotColor = agotado
-          ? "bg-destructive"
-          : bajo
-            ? "bg-amber-400"
-            : "bg-emerald-500";
         return (
           <div
             key={p.id}
