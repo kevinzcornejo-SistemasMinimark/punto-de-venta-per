@@ -31,7 +31,7 @@ export function ProductGrid({
           >
             {/* Badge de stock visible */}
             <span
-              className={`absolute top-2 right-2 z-10 px-2 py-0.5 rounded-full text-[10px] font-extrabold ring-2 ring-background shadow-sm text-white ${
+              className={`absolute top-2 right-2 z-10 px-3 py-1 rounded-full text-sm font-extrabold ring-2 ring-background shadow-md text-white ${
                 agotado ? "bg-destructive" : bajo ? "bg-amber-500" : "bg-emerald-500"
               }`}
               title={`Stock disponible: ${p.stock} ${p.unidad}`}
