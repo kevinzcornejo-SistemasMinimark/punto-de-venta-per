@@ -35,6 +35,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { AlertTriangle } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 const METODO_STYLES: Record<string, string> = {
   EFECTIVO: "bg-emerald-100 text-emerald-700 border-emerald-300",
