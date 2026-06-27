@@ -18,17 +18,59 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Plus, X, Banknote, Smartphone, CreditCard, Check, ArrowRightLeft } from "lucide-react";
+import { Plus, X, Check } from "lucide-react";
 import { formatPEN } from "@/lib/format";
 import { toast } from "sonner";
 
+// Logos de marca como SVG inline (sin dependencias externas)
+const EfectivoLogo = ({ active }: { active: boolean }) => (
+  <svg viewBox="0 0 48 32" className="h-9 w-14" aria-hidden>
+    <rect x="1" y="1" width="46" height="30" rx="4"
+      fill={active ? "#ffffff" : "#10b981"} stroke={active ? "#ffffff" : "#059669"} strokeWidth="1.5"/>
+    <circle cx="24" cy="16" r="7" fill="none" stroke={active ? "#10b981" : "#ffffff"} strokeWidth="1.8"/>
+    <text x="24" y="20" textAnchor="middle" fontSize="9" fontWeight="900"
+      fill={active ? "#10b981" : "#ffffff"} fontFamily="system-ui">S/</text>
+  </svg>
+);
+
+const YapeLogo = ({ active }: { active: boolean }) => (
+  <div className={`px-3 py-1.5 rounded-md font-black text-lg tracking-tight ${
+    active ? "bg-white text-[#6B2BD9]" : "bg-[#6B2BD9] text-white"
+  }`}>yape</div>
+);
+
+const PlinLogo = ({ active }: { active: boolean }) => (
+  <div className={`px-3 py-1.5 rounded-md font-black text-lg tracking-tight italic ${
+    active ? "bg-white text-[#00B2A9]" : "bg-[#00B2A9] text-white"
+  }`}>plin</div>
+);
+
+const VisaMcLogo = ({ active }: { active: boolean }) => (
+  <svg viewBox="0 0 60 28" className="h-8 w-16" aria-hidden>
+    <rect width="60" height="28" rx="4" fill={active ? "#ffffff" : "#1A1F71"}/>
+    <text x="14" y="20" textAnchor="middle" fontSize="11" fontWeight="900"
+      fill={active ? "#1A1F71" : "#ffffff"} fontFamily="system-ui" fontStyle="italic">VISA</text>
+    <circle cx="38" cy="14" r="6" fill="#EB001B" opacity="0.9"/>
+    <circle cx="46" cy="14" r="6" fill="#F79E1B" opacity="0.85"/>
+  </svg>
+);
+
+const TransferLogo = ({ active }: { active: boolean }) => (
+  <svg viewBox="0 0 48 32" className="h-9 w-14" aria-hidden>
+    <rect x="1" y="1" width="46" height="30" rx="4"
+      fill={active ? "#ffffff" : "#0F4C81"} stroke={active ? "#ffffff" : "#0a3a64"} strokeWidth="1.5"/>
+    <path d="M12 12 H32 M28 8 L34 12 L28 16" stroke={active ? "#0F4C81" : "#ffffff"} strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M36 22 H16 M20 18 L14 22 L20 26" stroke={active ? "#0F4C81" : "#ffffff"} strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
 const METODOS = [
-  { value: "EFECTIVO", label: "Efectivo", icon: Banknote, color: "bg-emerald-500", ring: "ring-emerald-300" },
-  { value: "YAPE", label: "Yape", icon: Smartphone, color: "bg-purple-600", ring: "ring-purple-300" },
-  { value: "PLIN", label: "Plin", icon: Smartphone, color: "bg-cyan-600", ring: "ring-cyan-300" },
-  { value: "TARJETA_DEBITO", label: "Débito", icon: CreditCard, color: "bg-blue-600", ring: "ring-blue-300" },
-  { value: "TARJETA_CREDITO", label: "Crédito", icon: CreditCard, color: "bg-indigo-600", ring: "ring-indigo-300" },
-  { value: "TRANSFERENCIA", label: "Transfer.", icon: ArrowRightLeft, color: "bg-slate-600", ring: "ring-slate-300" },
+  { value: "EFECTIVO", label: "Efectivo", Logo: EfectivoLogo, color: "bg-emerald-500", ring: "ring-emerald-300" },
+  { value: "YAPE", label: "Yape", Logo: YapeLogo, color: "bg-[#6B2BD9]", ring: "ring-purple-300" },
+  { value: "PLIN", label: "Plin", Logo: PlinLogo, color: "bg-[#00B2A9]", ring: "ring-cyan-300" },
+  { value: "TARJETA_DEBITO", label: "Débito", Logo: VisaMcLogo, color: "bg-[#1A1F71]", ring: "ring-blue-300" },
+  { value: "TARJETA_CREDITO", label: "Crédito", Logo: VisaMcLogo, color: "bg-[#1A1F71]", ring: "ring-indigo-300" },
+  { value: "TRANSFERENCIA", label: "Transfer.", Logo: TransferLogo, color: "bg-[#0F4C81]", ring: "ring-slate-300" },
 ] as const;
 
 const BILLETES = [10, 20, 50, 100, 200];
@@ -261,13 +303,13 @@ export function CheckoutModal({
                   {/* Grid de métodos con iconos grandes */}
                   <div className="grid grid-cols-3 gap-2">
                     {METODOS.map((m) => {
-                      const Icon = m.icon;
+                      const Logo = m.Logo;
                       const active = p.metodo === m.value;
                       return (
                         <button
                           key={m.value}
                           onClick={() => cambiarMetodo(i, m.value)}
-                          className={`relative h-20 rounded-lg border-2 flex flex-col items-center justify-center gap-1 transition active:scale-95 ${
+                          className={`relative h-24 rounded-lg border-2 flex flex-col items-center justify-center gap-1.5 transition active:scale-95 ${
                             active
                               ? `${m.color} text-white border-transparent shadow-lg ring-4 ${m.ring}`
                               : "bg-card hover:bg-muted border-border hover:border-primary/40"
@@ -276,7 +318,7 @@ export function CheckoutModal({
                           {active && (
                             <Check className="absolute top-1 right-1 h-4 w-4" />
                           )}
-                          <Icon className="h-6 w-6" />
+                          <Logo active={active} />
                           <span className="text-xs font-bold">{m.label}</span>
                         </button>
                       );
