@@ -117,6 +117,35 @@ function TicketsPage() {
   const [cajerosMap, setCajerosMap] = useState<Record<string, string>>({});
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
+  // Imprime HTML usando un iframe oculto (evita bloqueadores de popups)
+  const printViaIframe = (html: string) => {
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "fixed";
+    iframe.style.right = "0";
+    iframe.style.bottom = "0";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "0";
+    document.body.appendChild(iframe);
+    const doc = iframe.contentWindow?.document;
+    if (!doc) { document.body.removeChild(iframe); return; }
+    doc.open();
+    doc.write(html);
+    doc.close();
+    const trigger = () => {
+      try {
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
+      } catch (e) { /* noop */ }
+      setTimeout(() => { try { document.body.removeChild(iframe); } catch {} }, 1500);
+    };
+    if (iframe.contentWindow?.document.readyState === "complete") {
+      setTimeout(trigger, 250);
+    } else {
+      iframe.onload = () => setTimeout(trigger, 250);
+    }
+  };
+
   const cargar = async () => {
     if (isDemo || !user) { setRows([]); setLoading(false); return; }
     setLoading(true);
@@ -299,11 +328,7 @@ function TicketsPage() {
   <div class="footer">Generado: ${new Date().toLocaleString("es-PE")}</div>
   <script>window.onload=()=>{setTimeout(()=>window.print(),250);}</script>
 </body></html>`;
-    const w = window.open("", "_blank", "width=1000,height=800");
-    if (!w) { toast.error("Permite ventanas emergentes para descargar el PDF"); return; }
-    w.document.open();
-    w.document.write(html);
-    w.document.close();
+    printViaIframe(html);
     toast.success("Abriendo diálogo de impresión — elige 'Guardar como PDF'");
   };
 
@@ -409,12 +434,8 @@ function TicketsPage() {
   <div class="center small">Generado: ${new Date().toLocaleString("es-PE")}</div>
   <script>window.onload=()=>{window.print();setTimeout(()=>window.close(),400);}</script>
 </body></html>`;
-
-    const w = window.open("", "_blank", "width=420,height=720");
-    if (!w) { toast.error("Permite ventanas emergentes para imprimir"); return; }
-    w.document.open();
-    w.document.write(html);
-    w.document.close();
+    printViaIframe(html);
+    toast.success(`Reporte 80mm listo (${filtered.length} tickets)`);
   };
 
   const limpiarFiltros = () => {

@@ -44,9 +44,7 @@ export function TicketModal({
   const handlePrint = () => {
     const el = document.getElementById("ticket-print-area");
     if (!el) return;
-    const w = window.open("", "_blank", "width=380,height=720");
-    if (!w) return;
-    w.document.write(`
+    const html = `
       <html><head><title>Ticket ${ticket.serie}-${correl}</title>
       <style>
         @page { size: 80mm auto; margin: 0; }
@@ -61,10 +59,20 @@ export function TicketModal({
         .total { font-size: 16px; font-weight: 700; }
       </style></head>
       <body>${el.innerHTML}${el.innerHTML}</body>
-      <script>window.onload=()=>{window.print();setTimeout(()=>window.close(),300);}</script>
       </html>
-    `);
-    w.document.close();
+    `;
+    const iframe = document.createElement("iframe");
+    iframe.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;";
+    document.body.appendChild(iframe);
+    const doc = iframe.contentWindow?.document;
+    if (!doc) { document.body.removeChild(iframe); return; }
+    doc.open(); doc.write(html); doc.close();
+    const fire = () => {
+      try { iframe.contentWindow?.focus(); iframe.contentWindow?.print(); } catch {}
+      setTimeout(() => { try { document.body.removeChild(iframe); } catch {} }, 1500);
+    };
+    if (iframe.contentWindow?.document.readyState === "complete") setTimeout(fire, 200);
+    else iframe.onload = () => setTimeout(fire, 200);
   };
 
   return (
