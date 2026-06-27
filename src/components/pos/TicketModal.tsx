@@ -17,6 +17,9 @@ export interface TicketData {
   metodoPago: string;
   cliente?: string;
   documentoCliente?: string;
+  cajero?: string;
+  caja?: string;
+  turno?: string;
 }
 
 const tipoLabel = (t: TicketData["tipo"]) =>
@@ -134,6 +137,13 @@ export function TicketModal({
             <div className="center text-center text-[11px]">
               ¡Gracias por su compra!
               <br />Conserve su ticket
+            </div>
+            <hr className="my-2 border-t border-dashed border-black" />
+            <div className="text-[10px] leading-snug">
+              <div>EMITIDO : {fechaStr}</div>
+              {ticket.caja && <div>CAJA    : {ticket.caja}</div>}
+              {ticket.turno && <div>TURNO   : {ticket.turno}</div>}
+              {ticket.cajero && <div>CAJERO  : {ticket.cajero}</div>}
             </div>
           </div>
         </div>

@@ -13,6 +13,8 @@ import {
   FileSpreadsheet,
   FileText,
   RefreshCw,
+  ArrowUpAZ,
+  ArrowDownAZ,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -113,6 +115,7 @@ function TicketsPage() {
   const [reprintingId, setReprintingId] = useState<string | null>(null);
   const [confirmVenta, setConfirmVenta] = useState<Venta | null>(null);
   const [cajerosMap, setCajerosMap] = useState<Record<string, string>>({});
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   const cargar = async () => {
     if (isDemo || !user) { setRows([]); setLoading(false); return; }
@@ -169,7 +172,7 @@ function TicketsPage() {
 
   const filtered = useMemo(() => {
     const k = q.trim().toLowerCase();
-    return rows.filter((r) => {
+    const out = rows.filter((r) => {
       const d = new Date(r.creada_en);
       if (from && d < from) return false;
       if (to && d > to) return false;
@@ -182,7 +185,13 @@ function TicketsPage() {
       }
       return true;
     });
-  }, [rows, q, from, to, tipo, metodo, estado]);
+    out.sort((a, b) => {
+      const ta = new Date(a.creada_en).getTime();
+      const tb = new Date(b.creada_en).getTime();
+      return sortDir === "asc" ? ta - tb : tb - ta;
+    });
+    return out;
+  }, [rows, q, from, to, tipo, metodo, estado, sortDir]);
 
   const totalPeriodo = useMemo(
     () => filtered.reduce((s, r) => s + Number(r.total || 0), 0),
@@ -277,7 +286,7 @@ function TicketsPage() {
   @media print { .noprint{ display:none; } }
 </style></head><body>
   <h1>Reporte de Tickets</h1>
-  <div class="meta">Período: <b>${presetLabel[preset] ?? "Personalizado"}</b> &nbsp;|&nbsp; Total: <b>S/ ${totalPeriodo.toFixed(2)}</b> &nbsp;|&nbsp; ${filtered.length} ticket${filtered.length !== 1 ? "s" : ""}</div>
+  <div class="meta">Período: <b>${periodoTexto}</b> &nbsp;|&nbsp; Total: <b>S/ ${totalPeriodo.toFixed(2)}</b> &nbsp;|&nbsp; ${filtered.length} ticket${filtered.length !== 1 ? "s" : ""} &nbsp;|&nbsp; Orden: <b>${sortDir === "asc" ? "Fecha ↑" : "Fecha ↓"}</b></div>
   <table>
     <thead>
       <tr>
@@ -306,6 +315,17 @@ function TicketsPage() {
   const presetLabel: Record<RangoPreset, string> = {
     hoy: "Hoy", ayer: "Ayer", semana: "Última Semana", mes: "Último Mes", rango: "Rango personalizado",
   };
+
+  const periodoTexto = useMemo(() => {
+    const base = presetLabel[preset] ?? "Personalizado";
+    if (from && to) {
+      const f = from.toLocaleDateString("es-PE");
+      const t = to.toLocaleDateString("es-PE");
+      return preset === "rango" ? `Del ${f} al ${t}` : `${base} (${f} – ${t})`;
+    }
+    return base;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preset, from, to]);
 
   const imprimirReporte = () => {
     if (filtered.length === 0) { toast.error("No hay tickets para el reporte"); return; }
@@ -358,7 +378,7 @@ function TicketsPage() {
 
     const sep = "-".repeat(48);
     const titulo = `REPORTE DE TICKETS`;
-    const subt = presetLabel[preset] ?? "";
+    const subt = periodoTexto;
 
     const html = `<!doctype html><html><head><meta charset="utf-8"><title>Reporte de tickets</title>
 <style>
@@ -521,6 +541,31 @@ function TicketsPage() {
               <option value="ANULADA">ANULADA</option>
               <option value="PENDIENTE">PENDIENTE</option>
             </select>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            <span className="text-xs font-bold text-muted-foreground">Ordenar por fecha:</span>
+            <button
+              type="button"
+              onClick={() => setSortDir("desc")}
+              className={`h-9 px-3 rounded-full text-xs font-bold border inline-flex items-center gap-1.5 transition ${
+                sortDir === "desc"
+                  ? "bg-blue-500 text-white border-blue-500 shadow"
+                  : "bg-card hover:bg-muted border-border"
+              }`}
+            >
+              <ArrowDownAZ className="h-3.5 w-3.5" /> Más reciente primero
+            </button>
+            <button
+              type="button"
+              onClick={() => setSortDir("asc")}
+              className={`h-9 px-3 rounded-full text-xs font-bold border inline-flex items-center gap-1.5 transition ${
+                sortDir === "asc"
+                  ? "bg-blue-500 text-white border-blue-500 shadow"
+                  : "bg-card hover:bg-muted border-border"
+              }`}
+            >
+              <ArrowUpAZ className="h-3.5 w-3.5" /> Más antiguo primero
+            </button>
           </div>
         </Card>
 
