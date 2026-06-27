@@ -213,6 +213,7 @@ function POSPage() {
     tipo_comprobante: string;
     serie: string;
     documento_cliente?: string;
+    nombre_cliente?: string;
     pagos: { metodo: string; monto: number }[];
   }) => {
     const metodoPrincipal = data.pagos.length > 1
@@ -228,6 +229,7 @@ function POSPage() {
       total: cart.totales.total,
       metodoPago: metodoPrincipal.replace("_", " "),
       documentoCliente: data.documento_cliente,
+      cliente: data.nombre_cliente,
     };
     if (isDemo || !user) {
       setCheckoutOpen(false);
@@ -249,6 +251,9 @@ function POSPage() {
         igv: cart.totales.igv,
         total: cart.totales.total,
         cajero_id: user.id,
+        observaciones: data.nombre_cliente
+          ? `Cliente: ${data.nombre_cliente}${data.documento_cliente ? ` · Doc: ${data.documento_cliente}` : ""}`
+          : undefined,
       });
       setCheckoutOpen(false);
       setTicket({ ...baseTicket, correlativo: venta.correlativo });
