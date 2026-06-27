@@ -19,7 +19,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { formatPEN } from "@/lib/format";
 import { TicketModal, type TicketData } from "@/components/pos/TicketModal";
-import { printHTML } from "@/lib/exporters";
 import * as XLSX from "xlsx";
 import {
   AlertDialog,
