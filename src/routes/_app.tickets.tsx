@@ -542,6 +542,31 @@ function TicketsPage() {
               <option value="PENDIENTE">PENDIENTE</option>
             </select>
           </div>
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            <span className="text-xs font-bold text-muted-foreground">Ordenar por fecha:</span>
+            <button
+              type="button"
+              onClick={() => setSortDir("desc")}
+              className={`h-9 px-3 rounded-full text-xs font-bold border inline-flex items-center gap-1.5 transition ${
+                sortDir === "desc"
+                  ? "bg-blue-500 text-white border-blue-500 shadow"
+                  : "bg-card hover:bg-muted border-border"
+              }`}
+            >
+              <ArrowDownAZ className="h-3.5 w-3.5" /> Más reciente primero
+            </button>
+            <button
+              type="button"
+              onClick={() => setSortDir("asc")}
+              className={`h-9 px-3 rounded-full text-xs font-bold border inline-flex items-center gap-1.5 transition ${
+                sortDir === "asc"
+                  ? "bg-blue-500 text-white border-blue-500 shadow"
+                  : "bg-card hover:bg-muted border-border"
+              }`}
+            >
+              <ArrowUpAZ className="h-3.5 w-3.5" /> Más antiguo primero
+            </button>
+          </div>
         </Card>
 
         <Card className="p-4 flex flex-col items-center justify-center bg-emerald-50/60 border-emerald-200">
