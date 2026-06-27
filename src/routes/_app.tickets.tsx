@@ -328,11 +328,7 @@ function TicketsPage() {
   <div class="footer">Generado: ${new Date().toLocaleString("es-PE")}</div>
   <script>window.onload=()=>{setTimeout(()=>window.print(),250);}</script>
 </body></html>`;
-    const w = window.open("", "_blank", "width=1000,height=800");
-    if (!w) { toast.error("Permite ventanas emergentes para descargar el PDF"); return; }
-    w.document.open();
-    w.document.write(html);
-    w.document.close();
+    printViaIframe(html);
     toast.success("Abriendo diálogo de impresión — elige 'Guardar como PDF'");
   };
 
