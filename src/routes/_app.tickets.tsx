@@ -35,6 +35,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { AlertTriangle } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 const METODO_STYLES: Record<string, string> = {
   EFECTIVO: "bg-emerald-100 text-emerald-700 border-emerald-300",
@@ -118,6 +119,7 @@ function TicketsPage() {
   const [confirmVenta, setConfirmVenta] = useState<Venta | null>(null);
   const [cajerosMap, setCajerosMap] = useState<Record<string, string>>({});
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [previewHtml, setPreviewHtml] = useState<string | null>(null);
 
   // Imprime HTML usando un iframe oculto (evita bloqueadores de popups)
   const printViaIframe = (html: string) => {
@@ -352,8 +354,8 @@ function TicketsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [preset, from, to]);
 
-  const imprimirReporte = () => {
-    if (filtered.length === 0) { toast.error("No hay tickets para el reporte"); return; }
+  const construirReporteHtml = (): string | null => {
+    if (filtered.length === 0) { toast.error("No hay tickets para el reporte"); return null; }
 
     // Desglose por método de pago
     const porMetodo = new Map<string, { count: number; total: number }>();
@@ -434,6 +436,17 @@ function TicketsPage() {
   <div class="center small">Generado: ${new Date().toLocaleString("es-PE")}</div>
   <script>window.onload=()=>{window.print();setTimeout(()=>window.close(),400);}</script>
 </body></html>`;
+    return html;
+  };
+
+  const previsualizarReporte = () => {
+    const html = construirReporteHtml();
+    if (html) setPreviewHtml(html);
+  };
+
+  const imprimirReporte = () => {
+    const html = construirReporteHtml();
+    if (!html) return;
     printViaIframe(html);
     toast.success(`Reporte 80mm listo (${filtered.length} tickets)`);
   };
@@ -502,7 +515,7 @@ function TicketsPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" className="h-10 font-semibold" onClick={imprimirUltimo}><Printer className="h-4 w-4 mr-2" /> IMP-Ticket</Button>
-          <Button variant="outline" className="h-10 font-semibold" onClick={imprimirReporte}><Printer className="h-4 w-4 mr-2 text-purple-600" /> Reporte 80mm</Button>
+          <Button variant="outline" className="h-10 font-semibold" onClick={previsualizarReporte}><Printer className="h-4 w-4 mr-2 text-purple-600" /> Reporte 80mm</Button>
           <Button variant="outline" className="h-10 font-semibold" onClick={exportarExcel}><FileSpreadsheet className="h-4 w-4 mr-2 text-emerald-600" /> Excel</Button>
           <Button variant="outline" className="h-10 font-semibold" onClick={exportarPDF}><FileText className="h-4 w-4 mr-2 text-rose-600" /> PDF</Button>
           <Button variant="outline" className="h-10 font-semibold" onClick={cargar}><RefreshCw className="h-4 w-4 mr-2 text-blue-600" /> Actualizar</Button>
@@ -688,6 +701,37 @@ function TicketsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!previewHtml} onOpenChange={(o) => !o && setPreviewHtml(null)}>
+        <DialogContent className="max-w-md p-0">
+          <DialogHeader className="px-4 pt-4">
+            <DialogTitle>Vista previa — Reporte 80mm</DialogTitle>
+          </DialogHeader>
+          <div className="bg-muted/40 px-4 py-3 max-h-[65vh] overflow-auto flex justify-center">
+            <iframe
+              title="Vista previa reporte"
+              srcDoc={(previewHtml ?? "").replace(/<script[\s\S]*?<\/script>/g, "")}
+              style={{ width: "302px", minHeight: "60vh", background: "white", border: "1px solid hsl(var(--border))" }}
+            />
+          </div>
+          <DialogFooter className="px-4 pb-4 gap-2">
+            <Button variant="outline" onClick={() => setPreviewHtml(null)}>Cerrar</Button>
+            <Button
+              className="bg-purple-600 hover:bg-purple-700 text-white"
+              onClick={() => {
+                const html = previewHtml;
+                setPreviewHtml(null);
+                if (html) {
+                  printViaIframe(html);
+                  toast.success(`Reporte 80mm enviado a imprimir (${filtered.length} tickets)`);
+                }
+              }}
+            >
+              <Printer className="h-4 w-4 mr-2" /> Imprimir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
