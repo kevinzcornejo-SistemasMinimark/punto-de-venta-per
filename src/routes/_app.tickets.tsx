@@ -355,7 +355,7 @@ function TicketsPage() {
   }, [preset, from, to]);
 
   const construirReporteHtml = (): string | null => {
-    if (filtered.length === 0) { toast.error("No hay tickets para el reporte"); return; }
+    if (filtered.length === 0) { toast.error("No hay tickets para el reporte"); return null; }
 
     // Desglose por método de pago
     const porMetodo = new Map<string, { count: number; total: number }>();
