@@ -21,11 +21,6 @@ export function ProductGrid({
       {productos.map((p) => {
         const agotado = p.stock <= 0;
         const bajo = !agotado && p.stock <= p.stock_minimo;
-        const dotColor = agotado
-          ? "bg-destructive"
-          : bajo
-            ? "bg-amber-400"
-            : "bg-emerald-500";
         return (
           <div
             key={p.id}
@@ -34,10 +29,15 @@ export function ProductGrid({
               agotado ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
             }`}
           >
+            {/* Badge de stock visible */}
             <span
-              className={`absolute top-2 right-2 h-3 w-3 rounded-full ring-2 ring-background ${dotColor}`}
-              title={`${p.stock} ${p.unidad}`}
-            />
+              className={`absolute top-2 right-2 z-10 px-2 py-0.5 rounded-full text-[10px] font-extrabold ring-2 ring-background shadow-sm text-white ${
+                agotado ? "bg-destructive" : bajo ? "bg-amber-500" : "bg-emerald-500"
+              }`}
+              title={`Stock disponible: ${p.stock} ${p.unidad}`}
+            >
+              {agotado ? "AGOTADO" : `${p.stock} ${p.unidad}`}
+            </span>
             <div className="aspect-square rounded-xl bg-muted/50 grid place-items-center mb-2 overflow-hidden">
               {p.imagen ? (
                 <img
@@ -48,6 +48,11 @@ export function ProductGrid({
               ) : (
                 <span className="text-3xl font-black text-muted-foreground/50">
                   {p.nombre.slice(0, 2).toUpperCase()}
+                </span>
+              )}
+              {agotado && (
+                <span className="absolute inset-x-3 top-1/2 -translate-y-1/2 text-center py-1.5 rounded-md bg-destructive/90 text-white text-xs font-extrabold tracking-wider">
+                  SIN STOCK
                 </span>
               )}
             </div>
