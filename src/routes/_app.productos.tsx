@@ -23,6 +23,9 @@ import {
 import { Plus, Pencil, Trash2, Package, Search } from "lucide-react";
 import { toast } from "sonner";
 import { formatPEN } from "@/lib/format";
+import { fileToThumbDataUrl } from "@/lib/imageResize";
+import { Upload, X as XIcon } from "lucide-react";
+import { useRef } from "react";
 
 export const Route = createFileRoute("/_app/productos")({
   head: () => ({ meta: [{ title: "Productos — POS Minimarket" }] }),
@@ -41,6 +44,7 @@ type Producto = {
   categoria_id: string | null;
   afecto_igv: boolean;
   activo: boolean;
+  imagen_url?: string | null;
 };
 type Categoria = { id: string; nombre: string };
 
@@ -77,7 +81,7 @@ function ProductosPage() {
       supabase
         .from("productos")
         .select(
-          "id,codigo_barras,nombre,precio_venta,precio_compra,stock_actual,stock_minimo,unidad_medida,categoria_id,afecto_igv,activo",
+          "id,codigo_barras,nombre,precio_venta,precio_compra,stock_actual,stock_minimo,unidad_medida,categoria_id,afecto_igv,activo,imagen_url",
         )
         .order("nombre"),
       supabase.from("categorias").select("id,nombre").order("nombre"),
@@ -119,6 +123,7 @@ function ProductosPage() {
       categoria_id: p.categoria_id || null,
       afecto_igv: p.afecto_igv ?? true,
       activo: p.activo ?? true,
+      imagen_url: p.imagen_url ?? null,
     };
     const { error } = editing?.id
       ? await supabase.from("productos").update(payload).eq("id", editing.id)
@@ -180,6 +185,7 @@ function ProductosPage() {
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-left text-xs uppercase">
             <tr>
+              <th className="px-4 py-2 w-14"></th>
               <th className="px-4 py-2">Producto</th>
               <th className="px-4 py-2">Código</th>
               <th className="px-4 py-2 text-right">P. Compra</th>
@@ -191,19 +197,32 @@ function ProductosPage() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6} className="p-6 text-center text-muted-foreground">
+                <td colSpan={7} className="p-6 text-center text-muted-foreground">
                   Cargando…
                 </td>
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan={6} className="p-6 text-center text-muted-foreground">
+                <td colSpan={7} className="p-6 text-center text-muted-foreground">
                   Sin productos
                 </td>
               </tr>
             ) : (
               filtered.map((p) => (
                 <tr key={p.id} className="border-t">
+                  <td className="px-4 py-2">
+                    {p.imagen_url ? (
+                      <img
+                        src={p.imagen_url}
+                        alt={p.nombre}
+                        className="h-10 w-10 rounded-md object-cover border"
+                      />
+                    ) : (
+                      <div className="h-10 w-10 rounded-md bg-muted grid place-items-center text-[10px] font-bold text-muted-foreground">
+                        {p.nombre.slice(0, 2).toUpperCase()}
+                      </div>
+                    )}
+                  </td>
                   <td className="px-4 py-2 font-medium">{p.nombre}</td>
                   <td className="px-4 py-2 font-mono text-xs">
                     {p.codigo_barras ?? "—"}
