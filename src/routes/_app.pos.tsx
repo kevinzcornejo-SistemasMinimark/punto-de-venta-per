@@ -23,6 +23,7 @@ import {
   Mic,
   MicOff,
   Keyboard,
+  Plus,
   type LucideIcon,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
