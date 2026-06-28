@@ -16,6 +16,7 @@ import {
   ArrowUpAZ,
   ArrowDownAZ,
 } from "lucide-react";
+import { Smartphone, Banknote, CreditCard, ArrowRightLeft, Wallet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
