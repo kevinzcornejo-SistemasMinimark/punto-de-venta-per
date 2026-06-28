@@ -235,6 +235,25 @@ function TicketsPage() {
     [filtered],
   );
 
+  const desgloseMetodos = useMemo(() => {
+    const map = new Map<string, { count: number; total: number }>();
+    for (const v of filtered) {
+      const k = v.metodo_pago || "—";
+      const cur = map.get(k) ?? { count: 0, total: 0 };
+      cur.count += 1;
+      cur.total += Number(v.total || 0);
+      map.set(k, cur);
+    }
+    return Array.from(map.entries())
+      .map(([metodo, d]) => ({
+        metodo,
+        count: d.count,
+        total: d.total,
+        pct: totalPeriodo > 0 ? (d.total / totalPeriodo) * 100 : 0,
+      }))
+      .sort((a, b) => b.total - a.total);
+  }, [filtered, totalPeriodo]);
+
   const tiposUnicos = useMemo(
     () => Array.from(new Set(rows.map((r) => r.tipo_comprobante))).filter(Boolean),
     [rows],
