@@ -425,6 +425,14 @@ function ComboFormDialog({
             <span className="text-muted-foreground">Precio individual: <b>{formatPEN(totalIndiv)}</b></span>
             <span className="text-emerald-600 font-bold">Ahorro: {formatPEN(ahorro)}</span>
           </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-muted-foreground">Costo total: <b>{formatPEN(costoTotal)}</b></span>
+            {bajoCosto && (
+              <span className="text-red-600 font-bold">
+                ⚠️ Precio por debajo del costo (pérdida: {formatPEN(costoTotal - precio)})
+              </span>
+            )}
+          </div>
         </div>
 
         <DialogFooter>
