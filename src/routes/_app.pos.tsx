@@ -23,6 +23,7 @@ import {
   Mic,
   MicOff,
   Keyboard,
+  Plus,
   type LucideIcon,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -50,6 +51,20 @@ import { useCatalog } from "@/hooks/useCatalog";
 import { useAuth } from "@/contexts/AuthContext";
 import { registrarVenta } from "@/lib/ventas";
 import { broadcastCart, broadcastPagado, openCustomerDisplay } from "@/lib/customerDisplay";
+import { supabase } from "@/integrations/supabase/client";
+
+const COMBOS_CAT_ID = "__combos__";
+type ComboRow = {
+  id: string;
+  nombre: string;
+  descripcion: string | null;
+  precio_combo: number;
+  activo: boolean;
+  temporal: boolean;
+  fecha_inicio: string | null;
+  fecha_fin: string | null;
+  combo_items: Array<{ producto_id: string; cantidad: number; descuenta_stock: boolean }>;
+};
 
 export const Route = createFileRoute("/_app/pos")({
   head: () => ({ meta: [{ title: "Punto de Venta — POS Minimarket" }] }),
@@ -60,6 +75,7 @@ function POSPage() {
   const cart = usePOSCart();
   const { productos: allProductos, categorias, refresh } = useCatalog();
   const { user, isDemo } = useAuth();
+  const [combos, setCombos] = useState<ComboRow[]>([]);
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState<string | null>(null);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
@@ -69,6 +85,24 @@ function POSPage() {
   const [ayudaOpen, setAyudaOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
   const recRef = useRef<any>(null);
+
+  // Cargar combos activos
+  useEffect(() => {
+    if (isDemo || !user) { setCombos([]); return; }
+    (async () => {
+      const { data } = await supabase
+        .from("combos")
+        .select("id,nombre,descripcion,precio_combo,activo,temporal,fecha_inicio,fecha_fin,combo_items(producto_id,cantidad,descuenta_stock)")
+        .eq("activo", true)
+        .order("nombre");
+      const hoy = new Date().toISOString().slice(0, 10);
+      const vigentes = (data ?? []).filter((c: any) =>
+        !c.temporal ||
+        ((!c.fecha_inicio || c.fecha_inicio <= hoy) && (!c.fecha_fin || c.fecha_fin >= hoy)),
+      );
+      setCombos(vigentes as any);
+    })();
+  }, [isDemo, user?.id]);
 
   // Pantalla cliente: emitir cambios del carrito
   useEffect(() => {
@@ -205,6 +239,19 @@ function POSPage() {
     return list;
   }, [query, cat, allProductos]);
 
+  // Combos visibles según filtro
+  const combosVisibles = useMemo(() => {
+    if (cat && cat !== COMBOS_CAT_ID) return [];
+    const q = query.trim().toLowerCase();
+    if (!q) return combos;
+    return combos.filter((c) =>
+      c.nombre.toLowerCase().includes(q) ||
+      (c.descripcion ?? "").toLowerCase().includes(q),
+    );
+  }, [combos, cat, query]);
+
+  const mostrarSoloCombos = cat === COMBOS_CAT_ID;
+
   const handlePick = (p: MockProducto) => {
     if ((p.stock ?? 0) <= 0) {
       toast.error(`${p.nombre} sin stock`);
@@ -212,6 +259,37 @@ function POSPage() {
     }
     const ok = cart.add(p);
     if (!ok) toast.warning(`Stock máximo alcanzado: ${p.stock} ${p.unidad}`);
+  };
+
+  // Agregar combo: expande componentes y aplica descuentos para igualar precio_combo
+  const handlePickCombo = (c: ComboRow) => {
+    const lineas = (c.combo_items ?? []).map((it) => {
+      const prod = allProductos.find((p) => p.id === it.producto_id);
+      return { it, prod };
+    });
+    if (lineas.some((l) => !l.prod)) { toast.error("Combo con productos no encontrados"); return; }
+    // Validar stock
+    for (const l of lineas) {
+      const enCarrito = cart.items.find((x) => x.producto.id === l.prod!.id)?.cantidad ?? 0;
+      if ((l.prod!.stock ?? 0) - enCarrito < l.it.cantidad) {
+        toast.error(`Sin stock suficiente de ${l.prod!.nombre}`);
+        return;
+      }
+    }
+    const totalIndiv = lineas.reduce((s, l) => s + l.prod!.precio_venta * l.it.cantidad, 0);
+    const descTotal = Math.max(0, totalIndiv - Number(c.precio_combo));
+    let descRest = descTotal;
+    lineas.forEach((l, idx) => {
+      cart.add(l.prod!, l.it.cantidad);
+      const lineaTotal = l.prod!.precio_venta * l.it.cantidad;
+      const desc = idx === lineas.length - 1
+        ? descRest
+        : Math.round((descTotal * (lineaTotal / totalIndiv)) * 100) / 100;
+      descRest = Math.round((descRest - desc) * 100) / 100;
+      const existing = cart.items.find((x) => x.producto.id === l.prod!.id)?.descuento ?? 0;
+      cart.setDescuento(l.prod!.id, existing + desc);
+    });
+    toast.success(`Combo agregado: ${c.nombre}`);
   };
 
   const confirmarVenta = async (data: {
@@ -354,6 +432,14 @@ function POSPage() {
               active={cat === null}
               onClick={() => setCat(null)}
             />
+            {combos.length > 0 && (
+              <CategoryPill
+                label={`Combos (${combos.length})`}
+                icon={Layers}
+                active={cat === COMBOS_CAT_ID}
+                onClick={() => setCat(COMBOS_CAT_ID)}
+              />
+            )}
             {categorias.map((c) => {
               const Icon = ICONS[c.icono] ?? Package;
               return (
@@ -386,7 +472,21 @@ function POSPage() {
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 pb-5">
-          <ProductGrid productos={productos} onPick={handlePick} />
+          {mostrarSoloCombos ? (
+            <ComboGrid combos={combosVisibles} productos={allProductos} onPick={handlePickCombo} />
+          ) : (
+            <>
+              {combosVisibles.length > 0 && !cat && (
+                <div className="mb-4">
+                  <div className="text-xs font-extrabold uppercase tracking-wider text-emerald-600 mb-2 flex items-center gap-1.5">
+                    <Layers className="h-3.5 w-3.5" /> Combos disponibles
+                  </div>
+                  <ComboGrid combos={combosVisibles} productos={allProductos} onPick={handlePickCombo} />
+                </div>
+              )}
+              <ProductGrid productos={productos} onPick={handlePick} />
+            </>
+          )}
         </div>
 
         <div className="border-t bg-card px-5 py-2 text-xs font-semibold text-muted-foreground flex items-center justify-between">
@@ -516,5 +616,72 @@ function QuickAction({
       <Icon className={`h-4 w-4 ${color}`} />
       {label}
     </button>
+  );
+}
+
+function ComboGrid({
+  combos,
+  productos,
+  onPick,
+}: {
+  combos: ComboRow[];
+  productos: MockProducto[];
+  onPick: (c: ComboRow) => void;
+}) {
+  if (combos.length === 0) {
+    return (
+      <div className="text-center text-muted-foreground py-16 text-sm">
+        No hay combos disponibles.
+      </div>
+    );
+  }
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+      {combos.map((c) => {
+        const totalIndiv = (c.combo_items ?? []).reduce((s, it) => {
+          const p = productos.find((x) => x.id === it.producto_id);
+          return s + (p?.precio_venta ?? 0) * it.cantidad;
+        }, 0);
+        const ahorro = Math.max(0, totalIndiv - Number(c.precio_combo));
+        return (
+          <button
+            key={c.id}
+            onClick={() => onPick(c)}
+            className="relative rounded-2xl border-2 border-emerald-300 bg-gradient-to-br from-emerald-50 to-white p-3 transition shadow-sm hover:shadow-lg hover:border-emerald-500 active:scale-[0.98] flex flex-col text-left"
+          >
+            <span className="absolute top-2 right-2 z-10 px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-emerald-500 text-white shadow-md">
+              COMBO
+            </span>
+            <div className="aspect-square rounded-xl bg-emerald-100/60 grid place-items-center mb-2">
+              <Layers className="h-12 w-12 text-emerald-600" strokeWidth={2.2} />
+            </div>
+            <div className="text-sm font-extrabold leading-tight line-clamp-2 min-h-[2.4rem]">
+              {c.nombre}
+            </div>
+            <div className="text-[11px] text-muted-foreground line-clamp-2 min-h-[1.6rem]">
+              {(c.combo_items ?? []).map((it) => {
+                const p = productos.find((x) => x.id === it.producto_id);
+                return `${it.cantidad}× ${p?.nombre ?? "?"}`;
+              }).join(" + ")}
+            </div>
+            <div className="mt-1 flex items-end justify-between">
+              <div>
+                <div className="font-extrabold text-lg text-emerald-600 tabular-nums leading-none">
+                  {formatPEN(c.precio_combo)}
+                </div>
+                {ahorro > 0 && (
+                  <div className="text-[10px] font-bold text-emerald-700">
+                    Ahorras {formatPEN(ahorro)}
+                  </div>
+                )}
+              </div>
+              <span className="h-9 w-9 rounded-full bg-emerald-500 text-white grid place-items-center shadow-md">
+                <Plus className="h-5 w-5" strokeWidth={3} />
+              </span>
+            </div>
+          </button>
+        );
+      })}
+    </div>
   );
 }
