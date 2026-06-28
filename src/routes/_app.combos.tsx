@@ -273,6 +273,11 @@ function ComboFormDialog({
     return s + (p?.precio_venta ?? 0) * it.cantidad;
   }, 0), [items, productos]);
   const ahorro = Math.max(0, totalIndiv - precio);
+  const costoTotal = useMemo(() => items.reduce((s, it) => {
+    const p = productos.find((x) => x.id === it.producto_id);
+    return s + (p?.precio_compra ?? 0) * it.cantidad;
+  }, 0), [items, productos]);
+  const bajoCosto = precio > 0 && costoTotal > 0 && precio < costoTotal;
 
   const candidatos = useMemo(() => {
     const s = busc.trim().toLowerCase();
@@ -289,6 +294,14 @@ function ComboFormDialog({
     if (!nombre.trim()) return toast.error("Nombre requerido");
     if (items.length === 0) return toast.error("Agrega al menos un producto");
     if (precio <= 0) return toast.error("Precio inválido");
+    if (bajoCosto) {
+      const ok = confirm(
+        `⚠️ El precio del combo (S/ ${precio.toFixed(2)}) es MENOR al costo total de compra (S/ ${costoTotal.toFixed(2)}).\n\n` +
+        `Estás vendiendo con una PÉRDIDA de S/ ${(costoTotal - precio).toFixed(2)} por combo.\n\n` +
+        `¿Deseas continuar de todos modos?`
+      );
+      if (!ok) return;
+    }
     setSaving(true);
     try {
       const payload = {
