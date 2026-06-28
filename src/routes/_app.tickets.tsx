@@ -684,6 +684,54 @@ function TicketsPage() {
         <Button variant="ghost" onClick={limpiarFiltros} className="h-11 font-semibold">Limpiar</Button>
       </div>
 
+      {/* Detalle por Método de Pago */}
+      {desgloseMetodos.length > 0 && (
+        <Card className="p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="font-bold text-sm">Detalle por Método de Pago</div>
+            <div className="text-xs text-muted-foreground font-semibold">
+              {filtered.length} ticket{filtered.length !== 1 && "s"} · {formatPEN(totalPeriodo)}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+            {desgloseMetodos.map((d) => {
+              const meta = metodoMeta(d.metodo);
+              const Icon = meta.icon;
+              return (
+                <div
+                  key={d.metodo}
+                  className={`rounded-xl border p-3 flex items-center gap-3 ${meta.bg}`}
+                >
+                  <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${meta.iconBg}`}>
+                    <Icon className={`h-5 w-5 ${meta.iconColor}`} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <div className="font-bold text-sm truncate">{METODO_LABEL[d.metodo] ?? d.metodo}</div>
+                      <div className="font-extrabold text-orange-600 whitespace-nowrap">{formatPEN(d.total)}</div>
+                    </div>
+                    <div className="flex items-center justify-between gap-2 mt-0.5">
+                      <div className="text-xs text-muted-foreground">
+                        {d.count} transacci{d.count === 1 ? "ón" : "ones"}
+                      </div>
+                      <div className="text-xs font-semibold text-muted-foreground">
+                        {d.pct.toFixed(1)}%
+                      </div>
+                    </div>
+                    <div className="h-1.5 mt-1.5 rounded-full bg-muted overflow-hidden">
+                      <div
+                        className={`h-full ${meta.barColor}`}
+                        style={{ width: `${Math.min(100, d.pct)}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      )}
+
       <Card className="overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-muted/50 text-left text-xs uppercase">
