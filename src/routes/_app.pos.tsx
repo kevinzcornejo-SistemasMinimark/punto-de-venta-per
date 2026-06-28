@@ -617,3 +617,70 @@ function QuickAction({
     </button>
   );
 }
+
+function ComboGrid({
+  combos,
+  productos,
+  onPick,
+}: {
+  combos: ComboRow[];
+  productos: MockProducto[];
+  onPick: (c: ComboRow) => void;
+}) {
+  if (combos.length === 0) {
+    return (
+      <div className="text-center text-muted-foreground py-16 text-sm">
+        No hay combos disponibles.
+      </div>
+    );
+  }
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+      {combos.map((c) => {
+        const totalIndiv = (c.combo_items ?? []).reduce((s, it) => {
+          const p = productos.find((x) => x.id === it.producto_id);
+          return s + (p?.precio_venta ?? 0) * it.cantidad;
+        }, 0);
+        const ahorro = Math.max(0, totalIndiv - Number(c.precio_combo));
+        return (
+          <button
+            key={c.id}
+            onClick={() => onPick(c)}
+            className="relative rounded-2xl border-2 border-emerald-300 bg-gradient-to-br from-emerald-50 to-white p-3 transition shadow-sm hover:shadow-lg hover:border-emerald-500 active:scale-[0.98] flex flex-col text-left"
+          >
+            <span className="absolute top-2 right-2 z-10 px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-emerald-500 text-white shadow-md">
+              COMBO
+            </span>
+            <div className="aspect-square rounded-xl bg-emerald-100/60 grid place-items-center mb-2">
+              <Layers className="h-12 w-12 text-emerald-600" strokeWidth={2.2} />
+            </div>
+            <div className="text-sm font-extrabold leading-tight line-clamp-2 min-h-[2.4rem]">
+              {c.nombre}
+            </div>
+            <div className="text-[11px] text-muted-foreground line-clamp-2 min-h-[1.6rem]">
+              {(c.combo_items ?? []).map((it) => {
+                const p = productos.find((x) => x.id === it.producto_id);
+                return `${it.cantidad}× ${p?.nombre ?? "?"}`;
+              }).join(" + ")}
+            </div>
+            <div className="mt-1 flex items-end justify-between">
+              <div>
+                <div className="font-extrabold text-lg text-emerald-600 tabular-nums leading-none">
+                  {formatPEN(c.precio_combo)}
+                </div>
+                {ahorro > 0 && (
+                  <div className="text-[10px] font-bold text-emerald-700">
+                    Ahorras {formatPEN(ahorro)}
+                  </div>
+                )}
+              </div>
+              <span className="h-9 w-9 rounded-full bg-emerald-500 text-white grid place-items-center shadow-md">
+                <Plus className="h-5 w-5" strokeWidth={3} />
+              </span>
+            </div>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
