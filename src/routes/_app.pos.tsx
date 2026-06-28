@@ -281,18 +281,12 @@ function POSPage() {
     lineas.forEach((l, idx) => {
       cart.add(l.prod!, l.it.cantidad);
       const lineaTotal = l.prod!.precio_venta * l.it.cantidad;
-      // Descuento proporcional, último absorbe el redondeo
       const desc = idx === lineas.length - 1
         ? descRest
         : Math.round((descTotal * (lineaTotal / totalIndiv)) * 100) / 100;
       descRest = Math.round((descRest - desc) * 100) / 100;
-      // Acumular el descuento al item del carrito
-      setTimeout(() => {
-        const current = cart as any;
-        // setDescuento espera monto absoluto; lo sumamos al existente
-        const existing = current.items.find?.((x: any) => x.producto.id === l.prod!.id)?.descuento ?? 0;
-        cart.setDescuento(l.prod!.id, existing + desc);
-      }, 0);
+      const existing = cart.items.find((x) => x.producto.id === l.prod!.id)?.descuento ?? 0;
+      cart.setDescuento(l.prod!.id, existing + desc);
     });
     toast.success(`Combo agregado: ${c.nombre}`);
   };
