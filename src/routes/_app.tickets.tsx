@@ -66,6 +66,26 @@ function MetodoPill({ metodo }: { metodo: string }) {
   );
 }
 
+function metodoMeta(metodo: string) {
+  switch (metodo) {
+    case "YAPE":
+      return { icon: Smartphone, bg: "bg-card", iconBg: "bg-purple-100", iconColor: "text-purple-600", barColor: "bg-purple-500" };
+    case "PLIN":
+      return { icon: Smartphone, bg: "bg-card", iconBg: "bg-cyan-100", iconColor: "text-cyan-600", barColor: "bg-cyan-500" };
+    case "EFECTIVO":
+      return { icon: Banknote, bg: "bg-card", iconBg: "bg-emerald-100", iconColor: "text-emerald-600", barColor: "bg-emerald-500" };
+    case "TARJETA":
+    case "TARJETA_DEBITO":
+      return { icon: CreditCard, bg: "bg-card", iconBg: "bg-blue-100", iconColor: "text-blue-600", barColor: "bg-blue-500" };
+    case "TARJETA_CREDITO":
+      return { icon: CreditCard, bg: "bg-card", iconBg: "bg-orange-100", iconColor: "text-orange-600", barColor: "bg-orange-500" };
+    case "TRANSFERENCIA":
+      return { icon: ArrowRightLeft, bg: "bg-card", iconBg: "bg-slate-200", iconColor: "text-slate-700", barColor: "bg-slate-500" };
+    default:
+      return { icon: Wallet, bg: "bg-card", iconBg: "bg-muted", iconColor: "text-foreground", barColor: "bg-foreground/60" };
+  }
+}
+
 export const Route = createFileRoute("/_app/tickets")({
   head: () => ({ meta: [{ title: "Tickets — POS Minimarket" }] }),
   component: TicketsPage,
