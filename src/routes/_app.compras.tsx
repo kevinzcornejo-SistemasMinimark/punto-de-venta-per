@@ -196,6 +196,51 @@ function ComprasPage() {
           <DialogFooter><Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button><Button onClick={save}>Registrar compra</Button></DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-destructive/10">
+                <AlertTriangle className="h-5 w-5" />
+              </span>
+              Advertencia de precios
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3 pt-1">
+                <p>
+                  {alertas.length === 1
+                    ? "Hay 1 producto donde el precio de compra es mayor o igual al precio de venta actual."
+                    : `Hay ${alertas.length} productos donde el precio de compra es mayor o igual al precio de venta actual.`}
+                  {" "}Esto significa que venderías con pérdida.
+                </p>
+                <div className="rounded-lg border border-destructive/20 bg-destructive/5 divide-y divide-destructive/10">
+                  {alertas.map((a) => (
+                    <div key={a.i} className="px-3 py-2 text-sm">
+                      <div className="font-semibold text-foreground">Línea {a.i} · {a.nombre}</div>
+                      <div className="text-xs text-muted-foreground">
+                        Compra <span className="font-mono text-destructive">{formatPEN(a.compra)}</span>
+                        {" ≥ "}
+                        Venta actual <span className="font-mono">{formatPEN(a.venta)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs">Revisa los precios o actualiza el precio de venta en el módulo Productos antes de continuar.</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Revisar precios</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => void doSave()}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Registrar de todos modos
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
