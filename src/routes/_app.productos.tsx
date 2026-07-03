@@ -112,6 +112,11 @@ function ProductosPage() {
       setOpen(false);
       return;
     }
+    const pc = Number(p.precio_compra ?? 0);
+    const pv = Number(p.precio_venta ?? 0);
+    if (pv < pc) {
+      return toast.error("El precio de venta no puede ser menor al precio de compra");
+    }
     const payload: any = {
       codigo_barras: p.codigo_barras || null,
       nombre: p.nombre,
@@ -473,6 +478,12 @@ function ProductoModal({
                 set({ precio_venta: parseFloat(e.target.value) || 0 })
               }
             />
+            {Number(f.precio_venta ?? 0) > 0 &&
+              Number(f.precio_venta ?? 0) < Number(f.precio_compra ?? 0) && (
+                <p className="text-xs text-destructive mt-1">
+                  Menor al precio de compra
+                </p>
+              )}
           </div>
           <div>
             <Label>Stock actual</Label>
