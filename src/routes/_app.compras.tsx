@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ShoppingCart, Plus, Trash2 } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { ShoppingCart, Plus, Trash2, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCatalog } from "@/hooks/useCatalog";
@@ -31,6 +32,8 @@ function ComprasPage() {
   const [open, setOpen] = useState(false);
   const [f, setF] = useState<any>({ tipo_comprobante: "FACTURA", fecha_emision: new Date().toISOString().slice(0, 10), metodo_pago: "EFECTIVO" });
   const [lineas, setLineas] = useState<Linea[]>([]);
+  const [alertas, setAlertas] = useState<{ i: number; nombre: string; compra: number; venta: number }[]>([]);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const load = async () => {
     if (isDemo || !user) { setRows([]); setLoading(false); return; }
@@ -54,22 +57,26 @@ function ComprasPage() {
   const save = async () => {
     if (!f.proveedor_id) return toast.error("Selecciona proveedor");
     if (lineas.length === 0) return toast.error("Agrega productos");
-    const alertas = lineas
+    const problemas = lineas
       .map((l, i) => {
         const prod = productos.find((p) => p.id === l.producto_id);
         if (!prod || l.precio_unitario <= 0) return null;
         if (l.precio_unitario >= prod.precio_venta) {
-          return `• Línea ${i + 1} (${prod.nombre}): compra ${formatPEN(l.precio_unitario)} ≥ venta ${formatPEN(prod.precio_venta)}`;
+          return { i: i + 1, nombre: prod.nombre, compra: l.precio_unitario, venta: prod.precio_venta };
         }
         return null;
       })
-      .filter(Boolean);
-    if (alertas.length > 0) {
-      const ok = confirm(
-        `Atención: hay ${alertas.length} línea(s) donde el precio de compra es mayor o igual al precio de venta actual:\n\n${alertas.join("\n")}\n\n¿Deseas registrar la compra de todos modos?`,
-      );
-      if (!ok) return;
+      .filter(Boolean) as { i: number; nombre: string; compra: number; venta: number }[];
+    if (problemas.length > 0) {
+      setAlertas(problemas);
+      setConfirmOpen(true);
+      return;
     }
+    await doSave();
+  };
+
+  const doSave = async () => {
+    setConfirmOpen(false);
     const { data: compra, error } = await supabase.from("compras").insert({
       proveedor_id: f.proveedor_id,
       tipo_comprobante: f.tipo_comprobante,
@@ -189,6 +196,51 @@ function ComprasPage() {
           <DialogFooter><Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button><Button onClick={save}>Registrar compra</Button></DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-destructive/10">
+                <AlertTriangle className="h-5 w-5" />
+              </span>
+              Advertencia de precios
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3 pt-1">
+                <p>
+                  {alertas.length === 1
+                    ? "Hay 1 producto donde el precio de compra es mayor o igual al precio de venta actual."
+                    : `Hay ${alertas.length} productos donde el precio de compra es mayor o igual al precio de venta actual.`}
+                  {" "}Esto significa que venderías con pérdida.
+                </p>
+                <div className="rounded-lg border border-destructive/20 bg-destructive/5 divide-y divide-destructive/10">
+                  {alertas.map((a) => (
+                    <div key={a.i} className="px-3 py-2 text-sm">
+                      <div className="font-semibold text-foreground">Línea {a.i} · {a.nombre}</div>
+                      <div className="text-xs text-muted-foreground">
+                        Compra <span className="font-mono text-destructive">{formatPEN(a.compra)}</span>
+                        {" ≥ "}
+                        Venta actual <span className="font-mono">{formatPEN(a.venta)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs">Revisa los precios o actualiza el precio de venta en el módulo Productos antes de continuar.</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Revisar precios</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => void doSave()}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Registrar de todos modos
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
