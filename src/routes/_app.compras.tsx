@@ -54,6 +54,22 @@ function ComprasPage() {
   const save = async () => {
     if (!f.proveedor_id) return toast.error("Selecciona proveedor");
     if (lineas.length === 0) return toast.error("Agrega productos");
+    const alertas = lineas
+      .map((l, i) => {
+        const prod = productos.find((p) => p.id === l.producto_id);
+        if (!prod || l.precio_unitario <= 0) return null;
+        if (l.precio_unitario >= prod.precio_venta) {
+          return `• Línea ${i + 1} (${prod.nombre}): compra ${formatPEN(l.precio_unitario)} ≥ venta ${formatPEN(prod.precio_venta)}`;
+        }
+        return null;
+      })
+      .filter(Boolean);
+    if (alertas.length > 0) {
+      const ok = confirm(
+        `Atención: hay ${alertas.length} línea(s) donde el precio de compra es mayor o igual al precio de venta actual:\n\n${alertas.join("\n")}\n\n¿Deseas registrar la compra de todos modos?`,
+      );
+      if (!ok) return;
+    }
     const { data: compra, error } = await supabase.from("compras").insert({
       proveedor_id: f.proveedor_id,
       tipo_comprobante: f.tipo_comprobante,
