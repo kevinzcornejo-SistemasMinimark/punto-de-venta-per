@@ -478,6 +478,12 @@ function ProductoModal({
                 set({ precio_venta: parseFloat(e.target.value) || 0 })
               }
             />
+            {Number(f.precio_venta ?? 0) > 0 &&
+              Number(f.precio_venta ?? 0) < Number(f.precio_compra ?? 0) && (
+                <p className="text-xs text-destructive mt-1">
+                  Menor al precio de compra
+                </p>
+              )}
           </div>
           <div>
             <Label>Stock actual</Label>
