@@ -129,6 +129,15 @@ function ComprasPage() {
           <div className="border-t pt-3">
             <div className="flex justify-between mb-2"><span className="font-semibold">Productos</span><Button size="sm" variant="outline" onClick={addLinea}><Plus className="h-3 w-3 mr-1" />Agregar</Button></div>
             <div className="space-y-2">
+              {lineas.length > 0 && (
+                <div className="flex gap-2 items-center text-xs font-semibold text-muted-foreground uppercase px-1">
+                  <span className="flex-1">Producto</span>
+                  <span className="w-20 text-center">Cant.</span>
+                  <span className="w-28 text-center">Precio</span>
+                  <span className="w-24 text-right">Subtotal</span>
+                  <span className="w-9" />
+                </div>
+              )}
               {lineas.map((l, i) => (
                 <div key={i} className="flex gap-2 items-center">
                   <Select value={l.producto_id} onValueChange={(v) => updLinea(i, { producto_id: v })}>
