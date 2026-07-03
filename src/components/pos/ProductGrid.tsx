@@ -21,13 +21,14 @@ export function ProductGrid({
       {productos.map((p) => {
         const agotado = p.stock <= 0;
         const bajo = !agotado && p.stock <= p.stock_minimo;
+        const perdida = p.precio_venta > 0 && p.precio_venta <= p.precio_compra;
         return (
           <div
             key={p.id}
             onClick={() => !agotado && onPick(p)}
             className={`relative rounded-2xl border bg-card p-3 transition shadow-sm hover:shadow-md hover:border-primary/50 active:scale-[0.98] flex flex-col ${
               agotado ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
-            }`}
+            } ${perdida ? "ring-1 ring-destructive/40" : ""}`}
           >
             {/* Badge de stock visible */}
             <span
@@ -60,7 +61,7 @@ export function ProductGrid({
               {p.nombre}
             </div>
             <div className="mt-1 flex items-center justify-between">
-              <span className="font-extrabold text-lg text-primary tabular-nums">
+              <span className={`font-extrabold text-lg tabular-nums ${perdida ? "text-destructive" : "text-primary"}`}>
                 {formatPEN(p.precio_venta)}
               </span>
               <button
@@ -75,6 +76,11 @@ export function ProductGrid({
                 <Plus className="h-5 w-5" strokeWidth={3} />
               </button>
             </div>
+            {perdida && (
+              <div className="mt-1 text-[10px] font-semibold text-destructive uppercase tracking-wide">
+                ⚠ Venta bajo costo
+              </div>
+            )}
           </div>
         );
       })}

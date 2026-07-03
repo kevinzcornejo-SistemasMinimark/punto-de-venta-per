@@ -95,7 +95,23 @@ function ComprasPage() {
     });
     const { error: dErr } = await supabase.from("detalle_compras").insert(detalles);
     if (dErr) return toast.error(dErr.message);
-    toast.success("Compra registrada"); setOpen(false); setLineas([]); setF({ tipo_comprobante: "FACTURA", fecha_emision: new Date().toISOString().slice(0, 10), metodo_pago: "EFECTIVO" });
+    toast.success("Compra registrada");
+    // Sugerir actualizar precio de venta de productos donde el costo subió por encima del precio actual
+    const necesitanAjuste = lineas
+      .map((l) => {
+        const prod = productos.find((p) => p.id === l.producto_id);
+        if (!prod || l.precio_unitario <= 0) return null;
+        if (l.precio_unitario >= prod.precio_venta) return prod.nombre;
+        return null;
+      })
+      .filter(Boolean) as string[];
+    if (necesitanAjuste.length > 0) {
+      toast.warning(
+        `Actualiza el precio de venta en: ${necesitanAjuste.join(", ")}`,
+        { duration: 8000 },
+      );
+    }
+    setOpen(false); setLineas([]); setF({ tipo_comprobante: "FACTURA", fecha_emision: new Date().toISOString().slice(0, 10), metodo_pago: "EFECTIVO" });
     void load();
   };
 

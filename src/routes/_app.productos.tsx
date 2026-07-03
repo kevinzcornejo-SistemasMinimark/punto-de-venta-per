@@ -214,7 +214,7 @@ function ProductosPage() {
               </tr>
             ) : (
               filtered.map((p) => (
-                <tr key={p.id} className="border-t">
+                <tr key={p.id} className={`border-t ${Number(p.precio_venta) > 0 && Number(p.precio_venta) <= Number(p.precio_compra) ? "bg-destructive/5" : ""}`}>
                   <td className="px-4 py-2">
                     {p.imagen_url ? (
                       <img
@@ -228,14 +228,23 @@ function ProductosPage() {
                       </div>
                     )}
                   </td>
-                  <td className="px-4 py-2 font-medium">{p.nombre}</td>
+                  <td className="px-4 py-2 font-medium">
+                    <div className="flex items-center gap-2">
+                      <span>{p.nombre}</span>
+                      {Number(p.precio_venta) > 0 && Number(p.precio_venta) <= Number(p.precio_compra) && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 text-destructive text-[10px] font-semibold px-2 py-0.5 uppercase tracking-wide">
+                          Pérdida
+                        </span>
+                      )}
+                    </div>
+                  </td>
                   <td className="px-4 py-2 font-mono text-xs">
                     {p.codigo_barras ?? "—"}
                   </td>
                   <td className="px-4 py-2 text-right">
                     {formatPEN(Number(p.precio_compra))}
                   </td>
-                  <td className="px-4 py-2 text-right font-semibold text-primary">
+                  <td className={`px-4 py-2 text-right font-semibold ${Number(p.precio_venta) > 0 && Number(p.precio_venta) <= Number(p.precio_compra) ? "text-destructive" : "text-primary"}`}>
                     {formatPEN(Number(p.precio_venta))}
                   </td>
                   <td className="px-4 py-2 text-right">
