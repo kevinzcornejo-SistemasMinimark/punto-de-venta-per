@@ -150,6 +150,18 @@ function ComprasPage() {
                   <Button size="icon" variant="ghost" onClick={() => delLinea(i)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                 </div>
               ))}
+              {lineas.map((l, i) => {
+                const prod = productos.find((p) => p.id === l.producto_id);
+                if (!prod || l.precio_unitario <= 0) return null;
+                if (l.precio_unitario >= prod.precio_venta) {
+                  return (
+                    <p key={`w-${i}`} className="text-xs text-destructive px-1">
+                      ⚠ Línea {i + 1}: precio de compra ({formatPEN(l.precio_unitario)}) es mayor o igual al precio de venta actual ({formatPEN(prod.precio_venta)}). Revisa antes de registrar.
+                    </p>
+                  );
+                }
+                return null;
+              })}
               {lineas.length === 0 && <div className="text-sm text-muted-foreground text-center py-4">Agrega productos</div>}
             </div>
           </div>
