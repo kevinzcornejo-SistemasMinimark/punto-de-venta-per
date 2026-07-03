@@ -32,6 +32,8 @@ function ComprasPage() {
   const [open, setOpen] = useState(false);
   const [f, setF] = useState<any>({ tipo_comprobante: "FACTURA", fecha_emision: new Date().toISOString().slice(0, 10), metodo_pago: "EFECTIVO" });
   const [lineas, setLineas] = useState<Linea[]>([]);
+  const [alertas, setAlertas] = useState<{ i: number; nombre: string; compra: number; venta: number }[]>([]);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const load = async () => {
     if (isDemo || !user) { setRows([]); setLoading(false); return; }
@@ -55,22 +57,26 @@ function ComprasPage() {
   const save = async () => {
     if (!f.proveedor_id) return toast.error("Selecciona proveedor");
     if (lineas.length === 0) return toast.error("Agrega productos");
-    const alertas = lineas
+    const problemas = lineas
       .map((l, i) => {
         const prod = productos.find((p) => p.id === l.producto_id);
         if (!prod || l.precio_unitario <= 0) return null;
         if (l.precio_unitario >= prod.precio_venta) {
-          return `• Línea ${i + 1} (${prod.nombre}): compra ${formatPEN(l.precio_unitario)} ≥ venta ${formatPEN(prod.precio_venta)}`;
+          return { i: i + 1, nombre: prod.nombre, compra: l.precio_unitario, venta: prod.precio_venta };
         }
         return null;
       })
-      .filter(Boolean);
-    if (alertas.length > 0) {
-      const ok = confirm(
-        `Atención: hay ${alertas.length} línea(s) donde el precio de compra es mayor o igual al precio de venta actual:\n\n${alertas.join("\n")}\n\n¿Deseas registrar la compra de todos modos?`,
-      );
-      if (!ok) return;
+      .filter(Boolean) as { i: number; nombre: string; compra: number; venta: number }[];
+    if (problemas.length > 0) {
+      setAlertas(problemas);
+      setConfirmOpen(true);
+      return;
     }
+    await doSave();
+  };
+
+  const doSave = async () => {
+    setConfirmOpen(false);
     const { data: compra, error } = await supabase.from("compras").insert({
       proveedor_id: f.proveedor_id,
       tipo_comprobante: f.tipo_comprobante,
